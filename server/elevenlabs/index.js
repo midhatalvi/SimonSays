@@ -46,7 +46,9 @@ export default async function handler(req, res) {
   );
 
   if (!r.ok) {
-    res.status(r.status).json({ error: "elevenlabs request failed" });
+    const detail = await r.text().catch(() => "");
+    console.error("[elevenlabs]", r.status, detail);
+    res.status(r.status).json({ error: "elevenlabs request failed", status: r.status, detail });
     return;
   }
 
