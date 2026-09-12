@@ -252,6 +252,76 @@ body {
   box-shadow: inset 0 3px 14px rgba(150, 110, 70, 0.14);
 }
 
+/* ---- Roaming Simon (game screen) ------------------------------------------ */
+.game-roam { position: fixed; inset: 0; overflow: hidden; }
+
+.hud-pill {
+  position: absolute; top: max(16px, 3vh); left: 50%; transform: translateX(-50%);
+  font-weight: 800; font-size: clamp(1rem, 3.6vw, 1.3rem); color: var(--ink-soft);
+  background: var(--surface); padding: 0.5em 1.2em; border-radius: 999px;
+  box-shadow: var(--shadow-sm); z-index: 5;
+}
+
+.simon-wrap {
+  position: absolute; transform: translate(-50%, -50%);
+  transition: left 0.9s cubic-bezier(0.5, 0, 0.3, 1), top 0.9s cubic-bezier(0.5, 0, 0.3, 1);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  will-change: left, top;
+}
+
+.speech {
+  position: relative;
+  background: var(--surface);
+  border-radius: 26px;
+  padding: clamp(1rem, 4vw, 1.7rem) clamp(1.2rem, 5vw, 2rem);
+  box-shadow: var(--shadow);
+  max-width: min(66vw, 340px);
+  display: flex; flex-direction: column; align-items: center; gap: 1vh;
+  text-align: center;
+  animation: pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.speech::after {
+  content: ""; position: absolute; bottom: -10px; left: 50%;
+  width: 22px; height: 22px; background: var(--surface);
+  transform: translateX(-50%) rotate(45deg); border-radius: 0 0 6px 0;
+}
+.speech-cmd {
+  font-family: "Fredoka", sans-serif; font-weight: 600;
+  font-size: clamp(1.5rem, 6vw, 2.4rem); line-height: 1.05;
+  color: var(--ink); max-width: 13ch;
+}
+.speech-cmd.result-good { color: var(--good); }
+.speech-cmd.result-bad { color: var(--accent); }
+.speech-sub { font-size: clamp(0.95rem, 3.6vw, 1.2rem); font-weight: 700; color: var(--ink-soft); }
+
+/* Compact mascot */
+.mascot {
+  display: flex; flex-direction: column; align-items: center;
+  animation: bob 2.8s ease-in-out infinite;
+}
+.mascot.walking { animation: waddle 0.34s ease-in-out infinite; }
+.mascot-head {
+  width: clamp(84px, 22vw, 104px); height: clamp(64px, 17vw, 80px);
+  background: var(--surface); border-radius: 28px; box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; z-index: 2;
+}
+.mascot-body {
+  position: relative; margin-top: -12px;
+  width: clamp(112px, 30vw, 140px); height: clamp(80px, 21vw, 100px);
+  background: var(--surface); border-radius: 32px; box-shadow: var(--shadow-sm);
+  z-index: 1;
+}
+.mascot-body .robot-arm { top: 26%; height: 52px; }
+.mascot-feet { display: flex; gap: 46px; margin-top: -8px; z-index: 0; }
+.mascot-feet span {
+  width: 32px; height: 18px; border-radius: 0 0 16px 16px;
+  background: var(--surface); box-shadow: 0 6px 10px rgba(150, 110, 70, 0.14);
+}
+
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes waddle { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+
 @keyframes sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
 @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.12); } }
 
@@ -261,6 +331,8 @@ body {
 @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen, .prompt { animation: none; }
-  .countdown { animation: none; }
+  .screen, .prompt, .countdown, .mascot, .mascot.walking, .robot-sprout, .eye, .speech {
+    animation: none !important;
+  }
+  .simon-wrap { transition: none; }
 }
