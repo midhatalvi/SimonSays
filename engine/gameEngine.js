@@ -81,18 +81,17 @@ export function reactionFor(passed, simonSays = true) {
 }
 
 /**
- * Run one round. Returns { passed, reactionMs }. reactionMs is the time from the
- * command finishing to the pose being performed — only for correct "Simon says"
- * rounds (null otherwise).
+ * Judge one round AFTER the command has been spoken/revealed. Returns
+ * { passed, reactionMs }. reactionMs is the time from now (command delivered) to
+ * the pose being performed — only for correct "Simon says" rounds (null else).
+ * Speaking + on-screen reveal are handled by the UI so the text stays in sync
+ * with the voice (no reading ahead).
  *
  * @param {import("../shared/poses.js").Round} round
  * @param {(target:string)=>{matched:boolean,confidence:number}} checkPose
- * @param {(text:string)=>Promise<void>|void} say
  * @param {(secLeft:number)=>void} [onTick]
  */
-export async function runRound(round, checkPose, say, onTick) {
-  await say(round.spokenText || round.promptText);
-
+export async function judgeRound(round, checkPose, onTick) {
   if (round.type !== "movement" || !round.targetPose) {
     return { passed: true, reactionMs: null };
   }

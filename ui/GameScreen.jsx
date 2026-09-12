@@ -1,7 +1,7 @@
 // /ui — Game screen: Simon roams the stage, calls Simon Says commands from a
 // speech bubble, and enforces the rules with 3 lives. (MIDHAT)
 import React, { useEffect, useRef, useState } from "react";
-import { buildRounds, runRound, reactionFor } from "../engine/gameEngine.js";
+import { buildRounds, judgeRound, reactionFor } from "../engine/gameEngine.js";
 import { checkPose, getVisionStatus } from "../vision/checkPose.js";
 import { POSE_NAMES } from "../shared/poses.js";
 import { say } from "../voice/elevenlabs.js";
@@ -45,6 +45,25 @@ export default function GameScreen({ onDone }) {
       x: 35 + Math.random() * 30, // 35–65% keeps the bubble on screen (phones)
       y: 50 + Math.random() * 18, // 50–68% keeps the bubble above him visible
     });
+
+    // Speak the command while revealing the text word-by-word, so the on-screen
+    // text never gets ahead of the voice (no reading the action early).
+    const REVEAL_MS = 420;
+    const announce = async (round) => {
+      const words = round.promptText.split(" ");
+      setPrompt("");
+      const speakPromise = Promise.resolve(say(round.spokenText || round.promptText));
+      await wait(300); // let the voice start before the first word appears
+      const shown = [];
+      for (let k = 0; k < words.length; k++) {
+        if (cancelled) return;
+        shown.push(words[k]);
+        setPrompt(shown.join(" "));
+        await wait(REVEAL_MS);
+      }
+      await speakPromise;
+      if (!cancelled) setPrompt(round.promptText);
+    };
 
     (async () => {
       // 1) Camera + model.
@@ -101,12 +120,14 @@ export default function GameScreen({ onDone }) {
         setWalking(false);
 
         setRoundNum(i + 1);
-        setPrompt(round.promptText);
 
-        const { passed, reactionMs } = await runRound(
+        // Announce: reveal the command in time with the voice.
+        await announce(round);
+        if (cancelled) return;
+
+        const { passed, reactionMs } = await judgeRound(
           round,
           checkPose,
-          say,
           (secLeft) => !cancelled && setCountdown(secLeft)
         );
         if (cancelled) return;
