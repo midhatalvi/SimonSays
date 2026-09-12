@@ -10,23 +10,30 @@ function warmNote(score, total) {
   return "You showed up and moved, and that's what matters.";
 }
 
-export default function ScoreScreen({ score, total, onPlayAgain }) {
+export default function ScoreScreen({ score, total, eliminated, roundsPlayed, onPlayAgain }) {
   const spoken = useRef(false);
 
   useEffect(() => {
     if (spoken.current) return;
     spoken.current = true;
-    say(`Well done. You got ${score} out of ${total}. ${warmNote(score, total)}`);
-  }, [score, total]);
+    const recap = eliminated
+      ? `Good game! You made it through ${roundsPlayed} rounds and got ${score} right. ${warmNote(score, total)}`
+      : `Well done. You got ${score} out of ${total}. ${warmNote(score, total)}`;
+    say(recap);
+  }, [score, total, eliminated, roundsPlayed]);
 
   return (
     <div className="screen">
       <Robot expression="cheer">
-        <h1 className="belly-title">All done!</h1>
+        <h1 className="belly-title">{eliminated ? "Good game!" : "All done!"}</h1>
         <div className="big-num">
           {score}/{total}
         </div>
-        <p className="belly-text">{warmNote(score, total)}</p>
+        <p className="belly-text">
+          {eliminated
+            ? `You stayed sharp for ${roundsPlayed} rounds!`
+            : warmNote(score, total)}
+        </p>
         <button className="big-btn" onClick={onPlayAgain}>
           Play again
         </button>

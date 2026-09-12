@@ -10,9 +10,9 @@
 // Env vars on Vercel: ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID (optional)
 // ============================================================================
 
-// Default: "Rachel" (21m00Tcm4TlvDq8ikWAM) — calm, warm, mature. Override with
-// ELEVENLABS_VOICE_ID in Vercel to try another voice without a code change.
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+// Default voice (Midhat's pick). Override with ELEVENLABS_VOICE_ID in Vercel to
+// try another voice without a code change.
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "CyHwTRKhXEYuSd7CbMwI";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

@@ -1,6 +1,5 @@
-// /ui — Game screen: Simon roams the stage and calls out Simon Says commands
-// from a speech bubble. He holds still during your answer window so the command
-// stays readable, then waddles to a new spot for the next round. (MIDHAT)
+// /ui — Game screen: Simon roams the stage, calls Simon Says commands from a
+// speech bubble, and enforces the rules with 3 lives. (MIDHAT)
 import React, { useEffect, useRef, useState } from "react";
 import { buildRounds, runRound, reactionFor } from "../engine/gameEngine.js";
 import { checkPose, getVisionStatus } from "../vision/checkPose.js";
@@ -9,14 +8,15 @@ import { say } from "../voice/elevenlabs.js";
 import SimonCharacter from "./SimonCharacter.jsx";
 
 const TOTAL_ROUNDS = 6;
+const LIVES = 3;
 
 export default function GameScreen({ onDone }) {
   const [phase, setPhase] = useState("prep"); // prep | rules | playing | error
   const [prompt, setPrompt] = useState("Turning on the camera...");
-  const [sub, setSub] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [result, setResult] = useState(null); // "good" | "bad" | null
   const [roundNum, setRoundNum] = useState(0);
+  const [lives, setLives] = useState(LIVES);
   const [expr, setExpr] = useState("happy");
   const [pos, setPos] = useState({ x: 50, y: 58 });
   const [walking, setWalking] = useState(false);
@@ -42,7 +42,7 @@ export default function GameScreen({ onDone }) {
       });
 
     const randomSpot = () => ({
-      x: 35 + Math.random() * 30, // 35–65% keeps the speech bubble on screen (phones)
+      x: 35 + Math.random() * 30, // 35–65% keeps the bubble on screen (phones)
       y: 50 + Math.random() * 18, // 50–68% keeps the bubble above him visible
     });
 
@@ -58,19 +58,19 @@ export default function GameScreen({ onDone }) {
         return;
       }
 
-      // 2) Teach the rule.
+      // 2) Teach the rules.
       setPhase("rules");
       setExpr("ready");
-      setPrompt("Only move if I say “Simon says”!");
-      setSub("If I don't say it, just show your hands and stay still.");
       await say(
-        "Here's how we play. Only do the move if I say Simon says first. " +
-          "If I don't say Simon says, just show me your hands and don't move!"
+        "Here's how we play. When I say Simon says before a move, do it! " +
+          "But if I don't say Simon says, don't move — just show me your hands. " +
+          "Move on a fake one, or miss a real one, and you lose a life. " +
+          "You have three lives. Ready?"
       );
-      await wait(600);
+      await wait(700);
 
       // 3) Countdown.
-      setSub(null);
+      setPhase("playing");
       setExpr("happy");
       for (const n of [3, 2, 1]) {
         if (cancelled) return;
@@ -81,11 +81,12 @@ export default function GameScreen({ onDone }) {
       }
       setCountdown(null);
 
-      // 4) Play — Simon waddles to a new spot each round.
-      setPhase("playing");
+      // 4) Play — Simon roams; 3 lives; out when they run out.
       const rounds = buildRounds(TOTAL_ROUNDS);
       let score = 0;
-      for (let i = 0; i < rounds.length; i++) {
+      let livesLeft = LIVES;
+      let i = 0;
+      for (; i < rounds.length; i++) {
         if (cancelled) return;
         const round = rounds[i];
         setResult(null);
@@ -110,13 +111,29 @@ export default function GameScreen({ onDone }) {
         if (cancelled) return;
 
         setCountdown(null);
-        setResult(passed ? "good" : "bad");
-        setExpr(passed ? "cheer" : "oops");
-        if (passed) score++;
+        if (passed) {
+          score++;
+          setResult("good");
+          setExpr("cheer");
+        } else {
+          livesLeft--;
+          setLives(livesLeft);
+          setResult("bad");
+          setExpr("oops");
+        }
         await say(reactionFor(passed, round.simonSays));
         await wait(800);
+
+        if (livesLeft <= 0) {
+          if (!cancelled) await say("Oh no, that's all your lives! Great playing.");
+          break;
+        }
       }
-      if (!cancelled) onDone({ score, total: rounds.length });
+
+      const roundsPlayed = Math.min(i + 1, rounds.length);
+      if (!cancelled) {
+        onDone({ score, total: rounds.length, eliminated: livesLeft <= 0, roundsPlayed });
+      }
     })();
 
     return () => {
@@ -138,37 +155,49 @@ export default function GameScreen({ onDone }) {
     );
   }
 
-  const pill =
-    phase === "prep" ? "Getting ready" :
-    phase === "rules" ? "How to play" :
-    `Round ${roundNum || "–"} of ${TOTAL_ROUNDS}`;
+  const hearts = [];
+  for (let i = 0; i < LIVES; i++) hearts.push(i < lives ? "❤️" : "🤍");
 
   return (
     <div className="game-roam">
-      <div className="hud-pill">{pill}</div>
-      <div
-        className="simon-wrap"
-        style={{ left: pos.x + "%", top: pos.y + "%" }}
-      >
+      <div className="hud">
+        <div className="hud-pill">
+          {phase === "prep" ? "Getting ready" :
+           phase === "rules" ? "How to play" :
+           `Round ${roundNum || "–"} of ${TOTAL_ROUNDS}`}
+        </div>
+        {phase === "playing" && (
+          <div className="hearts" aria-label={`${lives} lives left`}>
+            {hearts.map((h, idx) => (
+              <span key={idx} className="heart">{h}</span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="simon-wrap" style={{ left: pos.x + "%", top: pos.y + "%" }}>
         {!walking && (
           <div className="speech">
-            {countdown != null ? (
+            {phase === "rules" ? (
+              <ul className="rules-list">
+                <li><b>"Simon says…"</b> → do the move!</li>
+                <li><b>No "Simon says"</b> → stay still, show your hands</li>
+                <li><b>❤️ 3 lives</b> — a slip costs one</li>
+              </ul>
+            ) : countdown != null ? (
               <span className="countdown">{countdown}</span>
             ) : (
-              <>
-                <span
-                  className={
-                    "speech-cmd " +
-                    (result === "good" ? "result-good" : result === "bad" ? "result-bad" : "")
-                  }
-                >
-                  {prompt}
-                </span>
-                {sub && <span className="speech-sub">{sub}</span>}
-              </>
+              <span
+                className={
+                  "speech-cmd " +
+                  (result === "good" ? "result-good" : result === "bad" ? "result-bad" : "")
+                }
+              >
+                {prompt}
+              </span>
             )}
             {result === "good" && <span className="feedback good">✓ Lovely!</span>}
-            {result === "bad" && <span className="feedback bad">That's okay 💛</span>}
+            {result === "bad" && <span className="feedback bad">Careful! 💛</span>}
           </div>
         )}
         <SimonCharacter expression={expr} walking={walking} />

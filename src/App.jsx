@@ -21,10 +21,6 @@ export default function App() {
     );
 
   return (
-    <ScoreScreen
-      score={result.score}
-      total={result.total}
-      onPlayAgain={() => setPhase("start")}
-    />
+    <ScoreScreen {...result} onPlayAgain={() => setPhase("start")} />
   );
 }
