@@ -1,19 +1,19 @@
-// /ui — Game screen: robot-framed round loop over the REAL detector. (MIDHAT)
-// Hands-free start: after the camera is ready, Simon asks you to raise both
-// hands to begin (no button). True thumbs-up needs hand detection (Shravanthi's
-// model); raise-both-hands reuses the current pose detector and works today.
+// /ui — Game screen: robot-framed Simon Says loop over the REAL detector. (MIDHAT)
+// Flow: turn on camera -> teach the rules -> 3-2-1 -> play. Simon Says logic
+// lives in /engine; here we just render Simon and speak.
 import React, { useEffect, useRef, useState } from "react";
 import { buildRounds, runRound, reactionFor } from "../engine/gameEngine.js";
 import { checkPose, getVisionStatus } from "../vision/checkPose.js";
-import { POSES, POSE_NAMES } from "../shared/poses.js";
+import { POSE_NAMES } from "../shared/poses.js";
 import { say } from "../voice/elevenlabs.js";
 import Robot from "./Robot.jsx";
 
 const TOTAL_ROUNDS = 6;
 
 export default function GameScreen({ onDone }) {
-  const [phase, setPhase] = useState("prep"); // prep | ready | playing | error
+  const [phase, setPhase] = useState("prep"); // prep | rules | playing | error
   const [prompt, setPrompt] = useState("Turning on the camera...");
+  const [sub, setSub] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [result, setResult] = useState(null); // "good" | "bad" | null
   const [roundNum, setRoundNum] = useState(0);
@@ -25,50 +25,45 @@ export default function GameScreen({ onDone }) {
     startedRef.current = true;
     let cancelled = false;
 
-    // Poll the detector until a condition holds, or a timeout elapses.
-    const pollUntil = (test, timeoutMs) =>
+    const waitForVision = (timeoutMs) =>
       new Promise((resolve) => {
         const deadline = Date.now() + timeoutMs;
         const step = () => {
           if (cancelled) return;
-          const done = test();
-          if (done) return resolve(done);
-          if (Date.now() > deadline) return resolve("timeout");
+          checkPose(POSE_NAMES[0]); // fire-and-forget lazy init
+          const { status } = getVisionStatus();
+          if (status === "ready" || status === "error") return resolve(status);
+          if (Date.now() > deadline) return resolve("error");
           setTimeout(step, 250);
         };
         step();
       });
 
     (async () => {
-      // 1) Wait for the detector to be ready (camera + model), with a timeout.
+      // 1) Camera + model.
       setPhase("prep");
       setExpr("happy");
       setPrompt("Turning on the camera...");
-      const visionResult = await pollUntil(() => {
-        checkPose(POSE_NAMES[0]); // fire-and-forget lazy init
-        const { status } = getVisionStatus();
-        return status === "ready" || status === "error" ? status : null;
-      }, 20000);
+      const status = await waitForVision(20000);
       if (cancelled) return;
-      if (visionResult === "error") {
+      if (status === "error") {
         setPhase("error");
         return;
       }
 
-      // 2) Hands-free ready gate: raise both hands to begin.
-      setPhase("ready");
+      // 2) Teach the Simon Says rule.
+      setPhase("rules");
       setExpr("ready");
-      setPrompt("Raise both hands when you're ready!");
-      await say("When you're ready, raise both hands up high!");
-      await pollUntil(() => checkPose(POSES.BOTH_HANDS_UP).matched, 20000);
-      if (cancelled) return;
+      setPrompt("Only move if I say “Simon says”!");
+      setSub("If I don't say it, just show me your hands and stay still.");
+      await say(
+        "Here's how we play. Only do the move if I say Simon says first. " +
+          "If I don't say Simon says, just show me your hands and don't move!"
+      );
+      await wait(600);
 
-      // 3) Play.
-      setPhase("playing");
-      setExpr("happy");
-      const rounds = buildRounds(TOTAL_ROUNDS);
-
-      await say("Wonderful! Here we go.");
+      // 3) Countdown.
+      setSub(null);
       for (const n of [3, 2, 1]) {
         if (cancelled) return;
         setPrompt("Get ready...");
@@ -77,6 +72,9 @@ export default function GameScreen({ onDone }) {
         await wait(400);
       }
 
+      // 4) Play.
+      setPhase("playing");
+      const rounds = buildRounds(TOTAL_ROUNDS);
       let score = 0;
       for (let i = 0; i < rounds.length; i++) {
         if (cancelled) return;
@@ -84,6 +82,7 @@ export default function GameScreen({ onDone }) {
         setRoundNum(i + 1);
         setResult(null);
         setExpr("happy");
+        setCountdown(null);
         setPrompt(round.promptText);
 
         const { passed } = await runRound(
@@ -98,8 +97,8 @@ export default function GameScreen({ onDone }) {
         setResult(passed ? "good" : "bad");
         setExpr(passed ? "cheer" : "oops");
         if (passed) score++;
-        await say(reactionFor(passed));
-        await wait(700);
+        await say(reactionFor(passed, round.simonSays));
+        await wait(800);
       }
       if (!cancelled) onDone({ score, total: rounds.length });
     })();
@@ -126,7 +125,7 @@ export default function GameScreen({ onDone }) {
 
   const pill =
     phase === "prep" ? "Getting ready" :
-    phase === "ready" ? "Ready?" :
+    phase === "rules" ? "How to play" :
     `Round ${roundNum || "–"} of ${TOTAL_ROUNDS}`;
 
   return (
@@ -141,6 +140,7 @@ export default function GameScreen({ onDone }) {
         >
           {prompt}
         </div>
+        {sub && <p className="belly-text">{sub}</p>}
         {countdown != null && <div className="countdown">{countdown}</div>}
         {result === "good" && <div className="feedback good">✓ Lovely!</div>}
         {result === "bad" && <div className="feedback bad">That's okay 💛</div>}

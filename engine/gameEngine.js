@@ -1,95 +1,111 @@
 // ============================================================================
 // /engine — game state machine + round logic  (MIDHAT)
 // ============================================================================
-// Owns the real-time loop: pick a round, issue a command, poll the detector
-// during a time window, score pass/fail, advance. UI subscribes for updates;
-// voice is called via callbacks so the engine stays free of I/O details.
+// Real Simon Says rules:
+//   - "Simon says <action>"  -> the player SHOULD do the pose.
+//   - "<action>" (no Simon)  -> a trick; the player should NOT do it and just
+//     keep their hands showing / stay neutral.
+// Scoring the trick rounds needs no new detection: we simply check that the
+// commanded pose is NOT performed during the window.
 // ============================================================================
 
-import { POSE_NAMES } from "../shared/poses.js";
+import { POSES } from "../shared/poses.js";
 
+// Action phrasing (lower-case; prompt builder capitalizes / prefixes as needed).
 const FRIENDLY = {
-  RIGHT_HAND_UP: "Raise your right hand!",
-  LEFT_HAND_UP: "Raise your left hand!",
-  BOTH_HANDS_UP: "Put both hands up!",
-  TOUCH_HEAD: "Touch the top of your head!",
-  ARMS_OUT: "Stretch both arms out wide!",
+  RIGHT_HAND_UP: "raise your right hand",
+  LEFT_HAND_UP: "raise your left hand",
+  BOTH_HANDS_UP: "put both hands up",
+  TOUCH_HEAD: "touch the top of your head",
+  ARMS_OUT: "stretch both arms out wide",
+  TOUCH_SHOULDERS: "touch both your shoulders",
+  TOUCH_NOSE: "touch your nose",
 };
 
-const PRAISE = [
-  "Nice work!",
-  "You've got it!",
-  "Beautiful!",
-  "Look at you go!",
-  "Perfect!",
-];
-const ENCOURAGE = [
-  "That's okay, keep going!",
-  "No worries, next one!",
-  "Nice try, here comes another!",
-  "You're doing great, stay with me!",
+// Poses the /vision detector can currently score AND that we use as commands.
+// NOTE: BOTH_HANDS_UP is intentionally NOT a command — "both hands out" is the
+// neutral "I'm not doing it" posture for trick rounds.
+// Add TOUCH_SHOULDERS / TOUCH_NOSE here once Shravanthi implements their
+// detection in /vision — until then they'd always fail.
+export const ACTIVE_POSES = [
+  POSES.RIGHT_HAND_UP,
+  POSES.LEFT_HAND_UP,
+  POSES.TOUCH_HEAD,
+  POSES.ARMS_OUT,
 ];
 
-/** Pick a friendly reaction line for a pass/fail result. */
-export function reactionFor(passed) {
-  const list = passed ? PRAISE : ENCOURAGE;
-  return list[Math.floor(Math.random() * list.length)];
-}
+// Chance a round is a real "Simon says" command (the rest are tricks).
+const SIMON_SAYS_CHANCE = 0.65;
+
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
- * Build a list of movement rounds. Trivia rounds (from /content) can be mixed
- * in later — the loop already handles round.type.
+ * Build a list of movement rounds mixing "Simon says" commands and tricks.
  * @returns {import("../shared/poses.js").Round[]}
  */
 export function buildRounds(count = 6, timeLimitSec = 5) {
   const rounds = [];
   for (let i = 0; i < count; i++) {
-    const targetPose = POSE_NAMES[Math.floor(Math.random() * POSE_NAMES.length)];
+    const targetPose = ACTIVE_POSES[Math.floor(Math.random() * ACTIVE_POSES.length)];
+    const simonSays = Math.random() < SIMON_SAYS_CHANCE;
+    const action = FRIENDLY[targetPose] || targetPose;
+    const promptText = simonSays ? `Simon says ${action}!` : `${capitalize(action)}!`;
     rounds.push({
       type: "movement",
-      promptText: FRIENDLY[targetPose] || targetPose,
+      promptText,
       targetPose,
-      timeLimitSec,
+      simonSays,
+      // Tricks resolve fast (player just has to not move); commands give more time.
+      timeLimitSec: simonSays ? timeLimitSec : 3,
     });
   }
   return rounds;
 }
 
+const PRAISE = ["Nice work!", "You've got it!", "Beautiful!", "Look at you go!", "Perfect!"];
+const PRAISE_TRICK = ["Good — you waited!", "Yes! I didn't say Simon says.", "Great listening!"];
+const ENCOURAGE = ["That's okay, keep going!", "No worries, next one!", "You're doing great!"];
+const ENCOURAGE_TRICK = ["Careful — I didn't say Simon says!", "Only move when Simon says!"];
+
+/** Friendly reaction line for a result, aware of the Simon Says rule. */
+export function reactionFor(passed, simonSays = true) {
+  const list = passed
+    ? simonSays ? PRAISE : PRAISE_TRICK
+    : simonSays ? ENCOURAGE : ENCOURAGE_TRICK;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
 /**
- * Run one movement round: speak the prompt, poll checkPose until matched or the
- * time window expires. Resolves with { passed, confidence }.
+ * Run one round. For a "Simon says" round the player must perform the pose; for
+ * a trick they must NOT. Resolves { passed }.
  *
  * @param {import("../shared/poses.js").Round} round
  * @param {(target:string)=>{matched:boolean,confidence:number}} checkPose
- * @param {(text:string)=>Promise<void>|void} say  speak a line (voice)
- * @param {(secLeft:number)=>void} [onTick]  optional countdown hook for UI
+ * @param {(text:string)=>Promise<void>|void} say
+ * @param {(secLeft:number)=>void} [onTick]
  */
 export async function runRound(round, checkPose, say, onTick) {
   await say(round.promptText);
 
   if (round.type !== "movement" || !round.targetPose) {
-    // Trivia handling lives with /content; treat as a pass for now.
-    return { passed: true, confidence: 1 };
+    return { passed: true };
   }
 
   const deadline = Date.now() + round.timeLimitSec * 1000;
-  let best = 0;
 
   return new Promise((resolve) => {
     const tick = () => {
       const msLeft = deadline - Date.now();
       if (onTick) onTick(Math.max(0, Math.ceil(msLeft / 1000)));
 
-      const { matched, confidence } = checkPose(round.targetPose);
-      if (confidence > best) best = confidence;
+      const { matched } = checkPose(round.targetPose);
 
-      if (matched) {
-        resolve({ passed: true, confidence });
-        return;
-      }
-      if (msLeft <= 0) {
-        resolve({ passed: false, confidence: best });
-        return;
+      if (round.simonSays) {
+        if (matched) return resolve({ passed: true });      // did it — good
+        if (msLeft <= 0) return resolve({ passed: false });  // ran out of time
+      } else {
+        if (matched) return resolve({ passed: false });      // did it — trick!
+        if (msLeft <= 0) return resolve({ passed: true });   // resisted — good
       }
       setTimeout(tick, 250);
     };

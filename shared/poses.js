@@ -12,6 +12,10 @@ export const POSES = {
   BOTH_HANDS_UP: "BOTH_HANDS_UP",
   TOUCH_HEAD: "TOUCH_HEAD",
   ARMS_OUT: "ARMS_OUT",
+  // Added 2026-09-12 — detection still TODO in /vision (Shravanthi). Kept out
+  // of the engine's ACTIVE_POSES rotation until detection lands.
+  TOUCH_SHOULDERS: "TOUCH_SHOULDERS",
+  TOUCH_NOSE: "TOUCH_NOSE",
 };
 
 // Convenience array (e.g. for the engine to pick a random pose).
@@ -41,6 +45,9 @@ export const POSE_NAMES = Object.values(POSES);
  * @property {string}              promptText   What the voice says / screen shows.
  * @property {string|null}         targetPose   A POSE name for movement, null for trivia.
  * @property {number}              timeLimitSec Time window for the round.
+ * @property {boolean}             [simonSays]  Simon Says rule: true = obey (perform
+ *                                              the pose); false = a trick, the player
+ *                                              must NOT perform it. Default true.
  */
 
 export {};

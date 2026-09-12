@@ -45,9 +45,11 @@ function Face({ expression }) {
 export default function Robot({ expression = "happy", children }) {
   return (
     <div className="robot">
-      <div className="robot-antenna" aria-hidden="true">
-        <span className="robot-antenna-dot" />
-      </div>
+      <svg className="robot-sprout" viewBox="0 0 60 52" aria-hidden="true">
+        <path d="M30 52 V28" className="sprout-stem" />
+        <path d="M30 32 C30 14 12 12 10 26 C10 38 26 38 30 32 Z" className="sprout-leaf" />
+        <path d="M30 32 C30 14 48 12 50 26 C50 38 34 38 30 32 Z" className="sprout-leaf" />
+      </svg>
       <div className={"robot-head expr-" + expression}>
         <Face expression={expression} />
       </div>
@@ -55,6 +57,9 @@ export default function Robot({ expression = "happy", children }) {
         <span className="robot-arm left" aria-hidden="true" />
         <span className="robot-arm right" aria-hidden="true" />
         <div className="robot-belly">{children}</div>
+      </div>
+      <div className="robot-feet" aria-hidden="true">
+        <span /><span />
       </div>
     </div>
   );
