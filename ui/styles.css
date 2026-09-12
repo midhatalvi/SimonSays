@@ -1,23 +1,35 @@
-/* /ui — elderly-first: large text, high contrast, one primary action. (MIDHAT) */
+/* /ui — Simon Says: warm & cozy theme. (MIDHAT)
+   Elderly-first: large text, high contrast, one primary action per screen,
+   gentle motion. Warm cream ground, terracotta accents, rounded friendly type. */
+
 :root {
-  --bg: #0b1b2b;
-  --fg: #ffffff;
-  --accent: #ffd23f;
-  --good: #2ecc71;
-  --bad: #e74c3c;
+  --bg: #fbf1e3;
+  --bg-2: #f6e2c9;
+  --surface: #fffaf3;
+  --ink: #4a3b32;        /* warm dark brown — primary text */
+  --ink-soft: #977f6d;   /* muted warm brown */
+  --accent: #e07a5f;     /* terracotta — primary action */
+  --accent-2: #f2a65a;   /* warm amber */
+  --good: #7fa886;       /* soft sage */
+  --shadow: 24px 24px 60px rgba(150, 110, 70, 0.18);
+  --shadow-sm: 0 10px 24px rgba(150, 110, 70, 0.16);
 }
 
 * { box-sizing: border-box; }
-
 html, body, #root { height: 100%; margin: 0; }
 
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background:
+    radial-gradient(1200px 800px at 15% -10%, #fff7ec 0%, transparent 60%),
+    radial-gradient(1000px 900px at 110% 20%, #fbe0c4 0%, transparent 55%),
+    linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: "Nunito", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ---- Layout ---------------------------------------------------------------- */
 .screen {
   min-height: 100%;
   display: flex;
@@ -25,53 +37,132 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 6vw;
-  gap: 4vh;
+  padding: 7vw 6vw;
+  gap: 3.2vh;
+  animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-.title { font-size: clamp(2.5rem, 9vw, 5rem); font-weight: 800; margin: 0; }
-.subtitle { font-size: clamp(1.25rem, 4.5vw, 2rem); opacity: 0.9; margin: 0; max-width: 20ch; }
-
-.prompt {
-  font-size: clamp(2rem, 7vw, 4rem);
-  font-weight: 800;
-  max-width: 16ch;
-  line-height: 1.1;
+/* A soft card the content sits on, for warmth + focus. */
+.card {
+  background: var(--surface);
+  border-radius: 34px;
+  padding: clamp(1.8rem, 6vw, 3.2rem);
+  box-shadow: var(--shadow);
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3vh;
 }
 
+/* ---- Type ------------------------------------------------------------------ */
+.title {
+  font-family: "Fredoka", "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.8rem, 11vw, 5rem);
+  line-height: 0.95;
+  margin: 0;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.subtitle {
+  font-size: clamp(1.2rem, 4.5vw, 1.7rem);
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 22ch;
+  line-height: 1.35;
+}
+.emoji-row { font-size: clamp(1.8rem, 7vw, 2.6rem); letter-spacing: 0.15em; }
+
+/* ---- Buttons --------------------------------------------------------------- */
 .big-btn {
-  font-size: clamp(1.5rem, 6vw, 2.5rem);
-  font-weight: 800;
-  color: #0b1b2b;
-  background: var(--accent);
+  font-family: "Fredoka", "Nunito", sans-serif;
+  font-size: clamp(1.4rem, 5.5vw, 2rem);
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent) 0%, #d96a4f 100%);
   border: none;
   border-radius: 999px;
-  padding: 0.6em 1.4em;
+  padding: 0.7em 1.6em;
   cursor: pointer;
-  min-width: 60vw;
-  max-width: 500px;
+  width: min(80%, 380px);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.big-btn:active { transform: scale(0.97); }
+.big-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 30px rgba(224, 122, 95, 0.35); }
+.big-btn:active { transform: translateY(1px) scale(0.98); }
 
-/* Game stage: camera fills the screen, game text overlays on top. */
-.game-stage { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
-.camera-feed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.camera-feed.mirrored { transform: scaleX(-1); }
-.camera-error {
-  position: fixed; inset: 0; z-index: 10; background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  padding: 6vw; text-align: center;
-}
+/* ---- Game stage ------------------------------------------------------------ */
+.game-stage { position: fixed; inset: 0; overflow: hidden; }
 .game-overlay {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; text-align: center; gap: 3vh;
-  padding: 6vw;
-  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55));
-  text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  gap: 3vh; padding: 7vw 6vw;
 }
 
-.countdown { font-size: clamp(3rem, 12vw, 7rem); font-weight: 900; color: var(--accent); }
-.score-line { font-size: clamp(1.5rem, 5vw, 2.5rem); }
-.result-good { color: var(--good); }
-.result-bad { color: var(--bad); }
-.big-num { font-size: clamp(4rem, 16vw, 9rem); font-weight: 900; color: var(--accent); }
+.pill {
+  font-weight: 800; font-size: clamp(1rem, 3.6vw, 1.3rem);
+  color: var(--ink-soft);
+  background: var(--surface);
+  padding: 0.5em 1.2em; border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+
+.prompt {
+  font-family: "Fredoka", "Nunito", sans-serif;
+  font-weight: 600;
+  font-size: clamp(2.1rem, 8vw, 4rem);
+  max-width: 15ch; line-height: 1.05;
+  color: var(--ink);
+  background: var(--surface);
+  padding: clamp(1.2rem, 5vw, 2.2rem) clamp(1.4rem, 6vw, 2.6rem);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+  animation: pop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.prompt.result-good { color: var(--good); }
+.prompt.result-bad { color: var(--accent); }
+
+.countdown {
+  font-family: "Fredoka", sans-serif;
+  font-size: clamp(3.4rem, 14vw, 7rem); font-weight: 700;
+  color: var(--accent-2);
+  animation: beat 0.7s ease-in-out infinite;
+}
+
+.feedback { font-size: clamp(1.3rem, 5vw, 2rem); font-weight: 800; }
+.feedback.good { color: var(--good); }
+.feedback.bad { color: var(--accent); }
+
+/* ---- Score ----------------------------------------------------------------- */
+.big-num {
+  font-family: "Fredoka", sans-serif;
+  font-size: clamp(4.5rem, 20vw, 9rem); font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.sparkle { font-size: clamp(2rem, 8vw, 3rem); }
+
+/* ---- Camera preview (from /vision, styled + de-skeletoned here) ------------- */
+/* Hide ONLY the skeleton dots (drawn on the overlay <canvas>); keep the video
+   thumbnail. Detection reads the <video> directly, so this is purely visual. */
+#vision-preview canvas { display: none !important; }
+#vision-preview {
+  width: 132px !important; height: 176px !important;      /* portrait, friendlier */
+  border-radius: 22px !important;
+  border: 4px solid var(--surface) !important;
+  box-shadow: var(--shadow-sm) !important;
+  bottom: 18px !important; right: 18px !important;
+}
+
+/* ---- Motion ---------------------------------------------------------------- */
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes pop  { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .screen, .prompt { animation: none; }
+  .countdown { animation: none; }
+}

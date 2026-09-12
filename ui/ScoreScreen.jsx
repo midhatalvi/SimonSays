@@ -2,25 +2,35 @@
 import React, { useEffect, useRef } from "react";
 import { say } from "../voice/elevenlabs.js";
 
+function warmNote(score, total) {
+  const ratio = total ? score / total : 0;
+  if (ratio >= 0.8) return "Wonderful moving today. You're doing so well.";
+  if (ratio >= 0.5) return "Lovely effort — every move counts.";
+  return "You showed up and moved, and that's what matters.";
+}
+
 export default function ScoreScreen({ score, total, onPlayAgain }) {
   const spoken = useRef(false);
 
   useEffect(() => {
     if (spoken.current) return;
     spoken.current = true;
-    say(`Great job! You got ${score} out of ${total}. Let's play again soon!`);
+    say(`Well done. You got ${score} out of ${total}. ${warmNote(score, total)}`);
   }, [score, total]);
 
   return (
     <div className="screen">
-      <h1 className="title">All done!</h1>
-      <div className="big-num">
-        {score}/{total}
+      <div className="card">
+        <div className="sparkle" aria-hidden="true">🌿✨</div>
+        <h1 className="title">All done!</h1>
+        <div className="big-num">
+          {score}/{total}
+        </div>
+        <p className="subtitle">{warmNote(score, total)}</p>
+        <button className="big-btn" onClick={onPlayAgain}>
+          Play again
+        </button>
       </div>
-      <p className="subtitle">You stayed sharp today. Nicely done.</p>
-      <button className="big-btn" onClick={onPlayAgain}>
-        Play again
-      </button>
     </div>
   );
 }

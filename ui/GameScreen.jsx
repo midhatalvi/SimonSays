@@ -99,12 +99,15 @@ export default function GameScreen({ onDone }) {
   if (phase === "error") {
     return (
       <div className="screen">
-        <p className="subtitle">
-          We need your camera to play. Please allow camera access, then tap below.
-        </p>
-        <button className="big-btn" onClick={() => window.location.reload()}>
-          Try again
-        </button>
+        <div className="card">
+          <div className="emoji-row" aria-hidden="true">📷</div>
+          <p className="subtitle">
+            We'll need your camera to play. Please allow camera access, then tap below.
+          </p>
+          <button className="big-btn" onClick={() => window.location.reload()}>
+            Try again
+          </button>
+        </div>
       </div>
     );
   }
@@ -112,8 +115,8 @@ export default function GameScreen({ onDone }) {
   return (
     <div className="game-stage">
       <div className="game-overlay">
-        <div className="score-line">
-          {phase === "prep" ? "Setting up" : `Round ${roundNum || "–"} of ${TOTAL_ROUNDS}`}
+        <div className="pill">
+          {phase === "prep" ? "Getting ready" : `Round ${roundNum || "–"} of ${TOTAL_ROUNDS}`}
         </div>
         <div
           className={
@@ -124,8 +127,8 @@ export default function GameScreen({ onDone }) {
           {prompt}
         </div>
         {countdown != null && <div className="countdown">{countdown}</div>}
-        {result === "good" && <div className="score-line result-good">✓ Got it!</div>}
-        {result === "bad" && <div className="score-line result-bad">Time's up</div>}
+        {result === "good" && <div className="feedback good">✓ Lovely!</div>}
+        {result === "bad" && <div className="feedback bad">That's okay 💛</div>}
       </div>
     </div>
   );
