@@ -11,17 +11,6 @@
 // the key stays server-side).
 // ============================================================================
 
-/**
- * TODO(teammate): fetch content from /api/tavily and shape it into rounds.
- *
- * @param {number} count how many trivia rounds to produce
- * @returns {Promise<import("../shared/poses.js").Round[]>}
- */
-export async function getTriviaRounds(count = 3) {
-  void count;
-  // Placeholder — return empty until wired up. Engine handles movement-only.
-  return [];
-}
 const TOPICS = [
   "a fun fact about music from the 1960s",
   "a fun fact about classic movies",

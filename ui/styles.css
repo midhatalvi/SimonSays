@@ -54,7 +54,7 @@ body {
 .big-btn:active { transform: scale(0.97); }
 
 /* Game stage: camera fills the screen, game text overlays on top. */
-.game-stage { position: fixed; inset: 0; overflow: hidden; background: #000; }
+.game-stage { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
 .camera-feed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .camera-feed.mirrored { transform: scaleX(-1); }
 .camera-error {
