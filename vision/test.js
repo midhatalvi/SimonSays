@@ -1,6 +1,9 @@
 import { checkPose, getVisionStatus } from "./checkPose.js";
 import { POSE_NAMES } from "../shared/poses.js";
 
+setDebugOverlay(true); // show landmark dots here for tuning; the real game keeps them off
+
+
 const rowsEl = document.getElementById("rows");
 const statusEl = document.getElementById("status");
 
