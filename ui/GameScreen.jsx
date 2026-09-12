@@ -85,6 +85,7 @@ export default function GameScreen({ onDone }) {
       const rounds = buildRounds(TOTAL_ROUNDS);
       let score = 0;
       let livesLeft = LIVES;
+      const reactions = []; // ms to perform, correct "Simon says" rounds only
       let i = 0;
       for (; i < rounds.length; i++) {
         if (cancelled) return;
@@ -102,7 +103,7 @@ export default function GameScreen({ onDone }) {
         setRoundNum(i + 1);
         setPrompt(round.promptText);
 
-        const { passed } = await runRound(
+        const { passed, reactionMs } = await runRound(
           round,
           checkPose,
           say,
@@ -113,6 +114,7 @@ export default function GameScreen({ onDone }) {
         setCountdown(null);
         if (passed) {
           score++;
+          if (reactionMs != null) reactions.push(reactionMs);
           setResult("good");
           setExpr("cheer");
         } else {
@@ -132,7 +134,7 @@ export default function GameScreen({ onDone }) {
 
       const roundsPlayed = Math.min(i + 1, rounds.length);
       if (!cancelled) {
-        onDone({ score, total: rounds.length, eliminated: livesLeft <= 0, roundsPlayed });
+        onDone({ score, total: rounds.length, eliminated: livesLeft <= 0, roundsPlayed, reactions });
       }
     })();
 

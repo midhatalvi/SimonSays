@@ -93,6 +93,12 @@ body {
 .belly-command.result-good { color: var(--good); }
 .belly-command.result-bad { color: var(--accent); }
 
+.metrics { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.metric {
+  font-weight: 800; font-size: clamp(0.9rem, 3.4vw, 1.15rem); color: var(--ink);
+  background: rgba(224, 122, 95, 0.14); padding: 0.4em 0.9em; border-radius: 999px;
+}
+
 /* ---- Buttons --------------------------------------------------------------- */
 .big-btn {
   font-family: "Fredoka", "Nunito", sans-serif;

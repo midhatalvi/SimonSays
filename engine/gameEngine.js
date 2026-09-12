@@ -1,17 +1,16 @@
 // ============================================================================
 // /engine — game state machine + round logic  (MIDHAT)
 // ============================================================================
-// Real Simon Says rules:
-//   - "Simon says <action>"  -> the player SHOULD do the pose.
-//   - "<action>" (no Simon)  -> a trick; the player should NOT do it and just
-//     keep their hands showing / stay neutral.
-// Scoring the trick rounds needs no new detection: we simply check that the
-// commanded pose is NOT performed during the window.
+// Simon Says rules:
+//   - "Simon says <action>"  -> player SHOULD do the pose.
+//   - "<action>" (no Simon)  -> a trick; player should NOT do it.
+// Trick rounds use a lower detection bar (FAKE_MOVE_THRESHOLD) so that starting
+// the movement is caught even if it never reaches a full confident match.
+// Reaction time (command -> pose) is measured for correct "Simon says" rounds.
 // ============================================================================
 
 import { POSES } from "../shared/poses.js";
 
-// Action phrasing (lower-case; prompt builder capitalizes / prefixes as needed).
 const FRIENDLY = {
   RIGHT_HAND_UP: "raise your right hand",
   LEFT_HAND_UP: "raise your left hand",
@@ -22,11 +21,8 @@ const FRIENDLY = {
   TOUCH_NOSE: "touch your nose",
 };
 
-// Poses the /vision detector can currently score AND that we use as commands.
-// NOTE: BOTH_HANDS_UP is intentionally NOT a command — "both hands out" is the
-// neutral "I'm not doing it" posture for trick rounds.
-// Add TOUCH_SHOULDERS / TOUCH_NOSE here once Shravanthi implements their
-// detection in /vision — until then they'd always fail.
+// Command poses in rotation. BOTH_HANDS_UP is the neutral "no task" posture.
+// Add TOUCH_SHOULDERS / TOUCH_NOSE once /vision (Shravanthi) implements them.
 export const ACTIVE_POSES = [
   POSES.RIGHT_HAND_UP,
   POSES.LEFT_HAND_UP,
@@ -34,28 +30,37 @@ export const ACTIVE_POSES = [
   POSES.ARMS_OUT,
 ];
 
-// Chance a round is a real "Simon says" command (the rest are tricks).
 const SIMON_SAYS_CHANCE = 0.65;
+const FAKE_MOVE_THRESHOLD = 0.45; // lower than a full match — catch attempts on tricks
+
+// Occasional warm lead-ins for a more human cadence.
+const LEADINS = ["", "", "", "Okay... ", "Alright... ", "Let's see... "];
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 /**
- * Build a list of movement rounds mixing "Simon says" commands and tricks.
+ * Build rounds mixing "Simon says" commands and tricks. Each round carries a
+ * clean `promptText` (for the screen) and a `spokenText` with pauses/lead-ins
+ * (for the voice).
  * @returns {import("../shared/poses.js").Round[]}
  */
 export function buildRounds(count = 6, timeLimitSec = 5) {
   const rounds = [];
   for (let i = 0; i < count; i++) {
-    const targetPose = ACTIVE_POSES[Math.floor(Math.random() * ACTIVE_POSES.length)];
+    const targetPose = pick(ACTIVE_POSES);
     const simonSays = Math.random() < SIMON_SAYS_CHANCE;
     const action = FRIENDLY[targetPose] || targetPose;
-    const promptText = simonSays ? `Simon says ${action}!` : `${capitalize(action)}!`;
+    const lead = pick(LEADINS);
     rounds.push({
       type: "movement",
-      promptText,
+      promptText: simonSays ? `Simon says ${action}!` : `${capitalize(action)}!`,
+      // Cadence: a beat after "Simon says", and after the lead-in.
+      spokenText: simonSays
+        ? `${lead}Simon says... ${action}.`
+        : `${lead}${capitalize(action)}.`,
       targetPose,
       simonSays,
-      // Tricks resolve fast (player just has to not move); commands give more time.
       timeLimitSec: simonSays ? timeLimitSec : 3,
     });
   }
@@ -72,12 +77,13 @@ export function reactionFor(passed, simonSays = true) {
   const list = passed
     ? simonSays ? PRAISE : PRAISE_TRICK
     : simonSays ? ENCOURAGE : ENCOURAGE_TRICK;
-  return list[Math.floor(Math.random() * list.length)];
+  return pick(list);
 }
 
 /**
- * Run one round. For a "Simon says" round the player must perform the pose; for
- * a trick they must NOT. Resolves { passed }.
+ * Run one round. Returns { passed, reactionMs }. reactionMs is the time from the
+ * command finishing to the pose being performed — only for correct "Simon says"
+ * rounds (null otherwise).
  *
  * @param {import("../shared/poses.js").Round} round
  * @param {(target:string)=>{matched:boolean,confidence:number}} checkPose
@@ -85,29 +91,31 @@ export function reactionFor(passed, simonSays = true) {
  * @param {(secLeft:number)=>void} [onTick]
  */
 export async function runRound(round, checkPose, say, onTick) {
-  await say(round.promptText);
+  await say(round.spokenText || round.promptText);
 
   if (round.type !== "movement" || !round.targetPose) {
-    return { passed: true };
+    return { passed: true, reactionMs: null };
   }
 
-  const deadline = Date.now() + round.timeLimitSec * 1000;
+  const t0 = Date.now();
+  const deadline = t0 + round.timeLimitSec * 1000;
 
   return new Promise((resolve) => {
     const tick = () => {
       const msLeft = deadline - Date.now();
       if (onTick) onTick(Math.max(0, Math.ceil(msLeft / 1000)));
 
-      const { matched } = checkPose(round.targetPose);
+      const { matched, confidence } = checkPose(round.targetPose);
 
       if (round.simonSays) {
-        if (matched) return resolve({ passed: true });      // did it — good
-        if (msLeft <= 0) return resolve({ passed: false });  // ran out of time
+        if (matched) return resolve({ passed: true, reactionMs: Date.now() - t0 });
+        if (msLeft <= 0) return resolve({ passed: false, reactionMs: null });
       } else {
-        if (matched) return resolve({ passed: false });      // did it — trick!
-        if (msLeft <= 0) return resolve({ passed: true });   // resisted — good
+        // Trick: any real attempt at the pose is a miss.
+        if (confidence >= FAKE_MOVE_THRESHOLD) return resolve({ passed: false, reactionMs: null });
+        if (msLeft <= 0) return resolve({ passed: true, reactionMs: null });
       }
-      setTimeout(tick, 250);
+      setTimeout(tick, 200);
     };
     tick();
   });
