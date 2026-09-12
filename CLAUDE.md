@@ -41,10 +41,18 @@ These are the interfaces both halves of the team build against. Changing one bre
 ```
 RIGHT_HAND_UP
 LEFT_HAND_UP
-BOTH_HANDS_UP
+BOTH_HANDS_UP        # now used as the neutral "no task" posture, not a command
 TOUCH_HEAD
 ARMS_OUT
+TOUCH_SHOULDERS      # detection TODO in /vision (Shravanthi); dormant until ready
+TOUCH_NOSE           # detection TODO in /vision (Shravanthi); dormant until ready
 ```
+
+Game rule: rounds are either "Simon says <action>" (perform the pose) or a trick
+"<action>" (do NOT perform it). Trick rounds need no new detection — the engine
+just checks the commanded pose is not performed. Poses become playable only when
+listed in `ACTIVE_POSES` in /engine, so a name can exist here before /vision
+implements it.
 
 ### Detector interface
 
@@ -61,7 +69,9 @@ checkPose(target) // target is one of the pose names above
   type: "movement" | "trivia",   // movement = pose game, trivia = Tavily content
   promptText: string,            // what the voice says / screen shows
   targetPose: string | null,     // a pose name for movement rounds, null for trivia
-  timeLimitSec: number
+  timeLimitSec: number,
+  simonSays?: boolean            // Simon Says rule: true = perform the pose,
+                                 // false = trick (must NOT perform). Default true.
 }
 ```
 
