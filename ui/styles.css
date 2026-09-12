@@ -75,6 +75,24 @@ body {
 }
 .emoji-row { font-size: clamp(1.8rem, 7vw, 2.6rem); letter-spacing: 0.15em; }
 
+/* Belly-screen content */
+.belly-title {
+  font-family: "Fredoka", sans-serif; font-weight: 700;
+  font-size: clamp(1.9rem, 7vw, 2.8rem); margin: 0; color: var(--accent); line-height: 1;
+}
+.belly-text {
+  font-size: clamp(1.05rem, 4vw, 1.4rem); font-weight: 700;
+  color: var(--ink-soft); margin: 0; max-width: 20ch; line-height: 1.3;
+}
+.belly-command {
+  font-family: "Fredoka", sans-serif; font-weight: 600;
+  font-size: clamp(1.7rem, 6.5vw, 2.7rem); line-height: 1.05;
+  color: var(--ink); max-width: 14ch;
+  animation: pop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.belly-command.result-good { color: var(--good); }
+.belly-command.result-bad { color: var(--accent); }
+
 /* ---- Buttons --------------------------------------------------------------- */
 .big-btn {
   font-family: "Fredoka", "Nunito", sans-serif;
@@ -139,7 +157,7 @@ body {
 /* ---- Score ----------------------------------------------------------------- */
 .big-num {
   font-family: "Fredoka", sans-serif;
-  font-size: clamp(4.5rem, 20vw, 9rem); font-weight: 700;
+  font-size: clamp(3rem, 13vw, 5rem); font-weight: 700;
   color: var(--accent);
   line-height: 1;
 }
@@ -156,6 +174,83 @@ body {
   box-shadow: var(--shadow-sm) !important;
   bottom: 18px !important; right: 18px !important;
 }
+
+/* ---- Simon the robot ------------------------------------------------------- */
+.robot {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.robot-antenna {
+  width: 6px; height: 26px; border-radius: 3px;
+  background: var(--ink-soft);
+  display: flex; justify-content: center;
+  margin-bottom: -2px;
+}
+.robot-antenna-dot {
+  position: absolute; margin-top: -13px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 10px 2px rgba(242, 166, 90, 0.7);
+  animation: blip 1.8s ease-in-out infinite;
+}
+
+.robot-head {
+  width: clamp(180px, 46vw, 240px);
+  height: clamp(130px, 33vw, 172px);
+  background: var(--surface);
+  border-radius: 40px;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; z-index: 2;
+}
+.robot-face-svg { width: 82%; height: 82%; }
+
+.eye { fill: var(--accent-2); animation: blink 5.5s infinite; transform-origin: center; transform-box: fill-box; }
+.eye-spark { fill: #fff; opacity: 0.9; }
+.eye-line { fill: none; stroke: var(--accent-2); stroke-width: 9; stroke-linecap: round; }
+.cheek { fill: rgba(224, 122, 95, 0.22); }
+.mouth-line { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; }
+.mouth-fill { fill: var(--accent); }
+.expr-cheer .cheek { fill: rgba(224, 122, 95, 0.4); }
+
+.robot-body {
+  position: relative;
+  margin-top: -22px;
+  width: min(520px, 100%);
+  background: var(--surface);
+  border-radius: 40px;
+  box-shadow: var(--shadow);
+  padding: clamp(1.6rem, 5vw, 2.4rem);
+  padding-top: clamp(2rem, 6vw, 2.8rem);
+  z-index: 1;
+}
+.robot-arm {
+  position: absolute; top: 34%;
+  width: 22px; height: 74px; border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.robot-arm.left { left: -14px; }
+.robot-arm.right { right: -14px; }
+
+/* The belly screen — where commands + score live. */
+.robot-belly {
+  background: linear-gradient(165deg, #fff7ec 0%, #fbe7cf 100%);
+  border-radius: 26px;
+  padding: clamp(1.4rem, 5vw, 2.4rem) clamp(1.2rem, 4vw, 2rem);
+  min-height: clamp(150px, 34vw, 220px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2.2vh;
+  text-align: center;
+  box-shadow: inset 0 3px 14px rgba(150, 110, 70, 0.14);
+}
+
+@keyframes blip { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.12); } }
 
 /* ---- Motion ---------------------------------------------------------------- */
 @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }

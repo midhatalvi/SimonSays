@@ -1,19 +1,19 @@
-// /ui — Start screen (MIDHAT)
+// /ui — Start screen: meet Simon the robot. (MIDHAT)
 import React from "react";
+import Robot from "./Robot.jsx";
 
 export default function StartScreen({ onStart }) {
   return (
     <div className="screen">
-      <div className="card">
-        <div className="emoji-row" aria-hidden="true">🙌 👋 🙆</div>
-        <h1 className="title">Simon Says</h1>
-        <p className="subtitle">
-          A gentle game of moves and memory. Let's stretch and smile together.
+      <Robot expression="happy">
+        <h1 className="belly-title">Simon Says</h1>
+        <p className="belly-text">
+          Hi, I'm Simon! Move along with me and let's stay sharp together.
         </p>
         <button className="big-btn" onClick={onStart}>
           Let's play
         </button>
-      </div>
+      </Robot>
     </div>
   );
 }

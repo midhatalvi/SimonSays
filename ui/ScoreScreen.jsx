@@ -1,5 +1,6 @@
 // /ui — Score screen with spoken recap. (MIDHAT)
 import React, { useEffect, useRef } from "react";
+import Robot from "./Robot.jsx";
 import { say } from "../voice/elevenlabs.js";
 
 function warmNote(score, total) {
@@ -20,17 +21,16 @@ export default function ScoreScreen({ score, total, onPlayAgain }) {
 
   return (
     <div className="screen">
-      <div className="card">
-        <div className="sparkle" aria-hidden="true">🌿✨</div>
-        <h1 className="title">All done!</h1>
+      <Robot expression="cheer">
+        <h1 className="belly-title">All done!</h1>
         <div className="big-num">
           {score}/{total}
         </div>
-        <p className="subtitle">{warmNote(score, total)}</p>
+        <p className="belly-text">{warmNote(score, total)}</p>
         <button className="big-btn" onClick={onPlayAgain}>
           Play again
         </button>
-      </div>
+      </Robot>
     </div>
   );
 }
