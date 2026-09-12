@@ -1,10 +1,10 @@
-# CLAUDE.md — Spry
+# CLAUDE.md — Simon Says
 
-> If the project name changed, replace "Spry" everywhere in this file.
+Repo: `midhatalvi/SimonSays`. Product name shown to users: **Simon Says**.
 
 ## What we're building
 
-Spry is a **camera-based cognitive + movement game to help elderly users stay sharp**. It's a Simon-Says-style game: a friendly voice host calls out actions, the user performs them in front of their device camera, the app scores their movements live, and the voice reacts. At the end it shows a score and a spoken recap.
+Simon Says is a **camera-based cognitive + movement game to help elderly users stay sharp**. It's a Simon-Says-style game: a friendly voice host calls out actions, the user performs them in front of their device camera, the app scores their movements live, and the voice reacts. At the end it shows a score and a spoken recap.
 
 Built at a weekend hackathon (LOCK IN Hack). Sponsor APIs we're using: **ElevenLabs** (voice) and **Tavily** (live web content). Using both is worth extra prizes.
 

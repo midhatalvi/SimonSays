@@ -53,6 +53,23 @@ body {
 }
 .big-btn:active { transform: scale(0.97); }
 
+/* Game stage: camera fills the screen, game text overlays on top. */
+.game-stage { position: fixed; inset: 0; overflow: hidden; background: #000; }
+.camera-feed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.camera-feed.mirrored { transform: scaleX(-1); }
+.camera-error {
+  position: fixed; inset: 0; z-index: 10; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 6vw; text-align: center;
+}
+.game-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; gap: 3vh;
+  padding: 6vw;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55));
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+}
+
 .countdown { font-size: clamp(3rem, 12vw, 7rem); font-weight: 900; color: var(--accent); }
 .score-line { font-size: clamp(1.5rem, 5vw, 2.5rem); }
 .result-good { color: var(--good); }

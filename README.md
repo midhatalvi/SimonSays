@@ -1,4 +1,4 @@
-# Spry (simonsays)
+# Simon Says (simonsays)
 
 Camera-based cognitive + movement game to help elderly users stay sharp. A
 friendly voice calls out actions, you perform them in front of your camera, the

@@ -16,6 +16,26 @@ const FRIENDLY = {
   ARMS_OUT: "Stretch both arms out wide!",
 };
 
+const PRAISE = [
+  "Nice work!",
+  "You've got it!",
+  "Beautiful!",
+  "Look at you go!",
+  "Perfect!",
+];
+const ENCOURAGE = [
+  "That's okay, keep going!",
+  "No worries, next one!",
+  "Nice try, here comes another!",
+  "You're doing great, stay with me!",
+];
+
+/** Pick a friendly reaction line for a pass/fail result. */
+export function reactionFor(passed) {
+  const list = passed ? PRAISE : ENCOURAGE;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
 /**
  * Build a list of movement rounds. Trivia rounds (from /content) can be mixed
  * in later — the loop already handles round.type.
