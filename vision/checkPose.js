@@ -170,6 +170,31 @@ function touchHeadScore(lm) {
   return clamp01(1 - Math.min(...candidates) / 0.9);
 }
 
+function touchNoseScore(lm) {
+  const nose = lm[IDX.NOSE];
+  if (!isVisible(nose)) return 0;
+  const scale = shoulderWidth(lm) || 0.001;
+  const candidates = [lm[IDX.LEFT_WRIST], lm[IDX.RIGHT_WRIST]]
+    .filter(isVisible).map((wrist) => dist(wrist, nose) / scale);
+  if (candidates.length === 0) return 0;
+  return clamp01(1 - Math.min(...candidates) / 0.75);
+}
+
+function touchShouldersScore(lm) {
+  const leftShoulder = lm[IDX.LEFT_SHOULDER];
+  const rightShoulder = lm[IDX.RIGHT_SHOULDER];
+  const leftWrist = lm[IDX.LEFT_WRIST];
+  const rightWrist = lm[IDX.RIGHT_WRIST];
+  if (![leftShoulder, rightShoulder, leftWrist, rightWrist].every(isVisible)) return 0;
+  const scale = shoulderWidth(lm) || 0.001;
+  const leftTouch = dist(leftWrist, rightShoulder) / scale;
+  const rightTouch = dist(rightWrist, leftShoulder) / scale;
+  return Math.min(
+    clamp01(1 - leftTouch / 0.9),
+    clamp01(1 - rightTouch / 0.9)
+  );
+}
+
 function armsOutScore(lm) {
   const scale = shoulderWidth(lm) || 0.001;
   const sideScore = (shoulderIdx, elbowIdx, wristIdx) => {
@@ -205,6 +230,8 @@ function scoreFor(target, lm) {
     case POSES.LEFT_HAND_UP: return handUpScore(lm, "left");
     case POSES.BOTH_HANDS_UP: return Math.min(handUpScore(lm, "left"), handUpScore(lm, "right"));
     case POSES.TOUCH_HEAD: return touchHeadScore(lm);
+    case POSES.TOUCH_NOSE: return touchNoseScore(lm);
+    case POSES.TOUCH_SHOULDERS: return touchShouldersScore(lm);
     case POSES.ARMS_OUT: return armsOutScore(lm);
     default: return 0;
   }
