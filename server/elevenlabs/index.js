@@ -17,7 +17,8 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "POST only" });
     return;
   }
-  const key = process.env.ELEVENLABS_API_KEY;
+  // Accept the standard name or the one set in the Vercel dashboard.
+  const key = process.env.ELEVENLABS_API_KEY || process.env.Eleven_labs_key;
   if (!key) {
     res.status(500).json({ error: "ELEVENLABS_API_KEY not set" });
     return;
