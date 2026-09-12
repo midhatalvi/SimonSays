@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>checkPose test page</title>
+    <style>
+      body { font-family: system-ui, sans-serif; background: #111; color: #eee; padding: 24px; }
+      table { border-collapse: collapse; margin-top: 16px; }
+      td, th { border: 1px solid #444; padding: 8px 14px; text-align: left; }
+      .bar { background: #333; width: 200px; height: 14px; position: relative; border-radius: 7px; overflow: hidden; }
+      .bar-fill { background: #00e0a0; height: 100%; }
+      #status { margin: 12px 0; font-size: 14px; color: #aaa; }
+    </style>
+  </head>
+  <body>
+    <h1>checkPose test page</h1>
+    <p>No game needed. This calls the real checkPose() directly and polls all five poses live.</p>
+    <div id="status">status: idle</div>
+    <table>
+      <thead><tr><th>Pose</th><th>Confidence</th><th>Matched?</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <script type="module" src="./test.js"></script>
+  </body>
+</html>
