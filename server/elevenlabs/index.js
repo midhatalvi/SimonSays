@@ -10,7 +10,9 @@
 // Env vars on Vercel: ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID (optional)
 // ============================================================================
 
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL"; // default: Rachel
+// Default: "Rachel" (21m00Tcm4TlvDq8ikWAM) — calm, warm, mature. Override with
+// ELEVENLABS_VOICE_ID in Vercel to try another voice without a code change.
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -41,6 +43,14 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         text,
         model_id: "eleven_turbo_v2_5", // low latency for a live demo
+        // Calm, patient delivery: high stability = steady + unhurried, low
+        // style = no exaggerated excitement.
+        voice_settings: {
+          stability: 0.75,
+          similarity_boost: 0.75,
+          style: 0.0,
+          use_speaker_boost: true,
+        },
       }),
     }
   );
