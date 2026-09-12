@@ -22,12 +22,14 @@ const FRIENDLY = {
 };
 
 // Command poses in rotation. BOTH_HANDS_UP is the neutral "no task" posture.
-// Add TOUCH_SHOULDERS / TOUCH_NOSE once /vision (Shravanthi) implements them.
+// TOUCH_SHOULDERS + TOUCH_NOSE now detected in /vision (Shravanthi) — live.
 export const ACTIVE_POSES = [
   POSES.RIGHT_HAND_UP,
   POSES.LEFT_HAND_UP,
   POSES.TOUCH_HEAD,
   POSES.ARMS_OUT,
+  POSES.TOUCH_SHOULDERS,
+  POSES.TOUCH_NOSE,
 ];
 
 const SIMON_SAYS_CHANCE = 0.65;
