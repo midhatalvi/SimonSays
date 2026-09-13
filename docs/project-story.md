@@ -41,7 +41,3 @@ Before using this story for a hackathon presentation:
 - [ ] Record which devices and browsers were tested, with outcomes.
 - [ ] Add the team's own account of challenges, lessons, and contributions.
 - [ ] Confirm event-specific fields and requirements against the actual event.
-
-## Writing references
-
-The organization takes inspiration from two winning Devpost project pages: [BlindSpot](https://devpost.com/software/blindspot-zs7dwq), which clearly connects the user problem to the experience and implementation, and [AccessAIble](https://devpost.com/software/isee-i3svk0), which introduces its intended users before describing the technology. Their claims, results, and awards belong to those projects. This page describes Simon Says from its own repository and is not an official event submission.
