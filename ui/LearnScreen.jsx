@@ -97,6 +97,7 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
     </> : !card ? <p role="status">{status}</p> : <>
       {!buttons && <div id="camera-preview-slot" aria-label="Camera preview" />}
       <p>{practice ? `Practice ${step + 1} of 2` : `Question ${step - 1} of ${questions.length} · ${settings.topic}`}</p>
+      {!practice && <p className="eyebrow">What do you think?</p>}
       <h2>{card.question}</h2>
       <div className="play-controls">{card.answers.map((answer, i) => ({ answer, i })).reverse().map(({ answer, i }) => <div key={i} className="answer-card">
         <strong>{i === 0 ? 'A' : 'B'}: {answer}</strong>
@@ -108,18 +109,19 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
         <button disabled={!ready || repeatBusy} onClick={() => { pause.current = !pause.current; setPaused(pause.current); setStatus(pause.current ? 'Paused. Resume when ready.' : 'Choose A or B.'); }}>{paused ? 'Resume' : 'Pause'}</button>
         <button disabled={!ready || repeatBusy} onClick={repeat}>Repeat question</button>
         <button disabled={!ready || repeatBusy} onClick={skip}>Skip — no penalty</button>
-      </div> : <>
-        {!practice && <section aria-label="Answer evidence" className="fact-detail">
-          <h3>More about {card.answers[card.correct]}</h3>
+      </div> : practice ? <div className="play-controls">
+        <button onClick={() => { setQuestions([...questions]); }}>Practice again</button>
+        <button onClick={() => { setRepeatBusy(false); setStep(s => s + 1); }}>{step === 1 ? 'Start question' : 'Continue'}</button>
+      </div> : <div className="discovery-modal-backdrop">
+        <div className="discovery-modal" role="dialog" aria-live="polite">
+          <p className="modal-verdict">{result === card.correct ? '✓ Correct!' : 'Good try!'}</p>
+          <h2 className="modal-answer">{card.answers[card.correct]}</h2>
           <blockquote>{card.source.excerpt}</blockquote>
           <a href={card.source.url} target="_blank" rel="noopener noreferrer">Read source: {card.source.title}</a>
           <p className="auto-advance-note">Continuing in a few seconds…</p>
-        </section>}
-        <div className="play-controls">
-          {practice && <button onClick={() => { setQuestions([...questions]); }}>Practice again</button>}
-          <button onClick={() => { if (onFinish && !practice) onFinish({ ...totals.current }); else { setRepeatBusy(false); setStep(s => s + 1); } }}>{discoveryItem ? finishLabel : onFinish && !practice ? 'Back to movement' : step === 1 ? 'Start question' : 'Continue'}</button>
+          <button className="big-btn" onClick={() => { if (onFinish) onFinish({ ...totals.current }); else { setRepeatBusy(false); setStep(s => s + 1); } }}>{discoveryItem ? finishLabel : onFinish ? 'Back to movement' : 'Continue now'}</button>
         </div>
-      </>}
+      </div>}
     </>}
   </main>;
 }

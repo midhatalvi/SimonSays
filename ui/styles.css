@@ -1253,3 +1253,30 @@ select {
 .fact-detail h3 { margin: 0 0 0.4rem; font-family: "Fredoka", sans-serif; color: var(--accent, #E07A5F); }
 .fact-detail blockquote { margin: 0 0 0.6rem; padding-left: 0.9rem; border-left: 4px solid rgba(224,122,95,0.5); }
 .auto-advance-note { opacity: 0.7; font-style: italic; margin-top: 0.6rem; }
+
+/* Discovery break: fact popup after answering */
+.discovery-modal-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 6vw; background: rgba(74, 59, 50, 0.45);
+  animation: rise 0.25s ease both;
+}
+.discovery-modal {
+  background: var(--surface, #fffaf3); color: var(--ink, #4a3b32);
+  border-radius: 28px; padding: clamp(1.6rem, 6vw, 2.6rem);
+  width: min(520px, 100%); text-align: center;
+  box-shadow: 0 30px 70px rgba(74, 59, 50, 0.35);
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+.discovery-modal .modal-verdict {
+  font-weight: 800; font-size: clamp(1.1rem, 4vw, 1.4rem);
+  color: var(--good, #7fa886); margin: 0;
+}
+.discovery-modal .modal-answer {
+  font-family: "Fredoka", sans-serif; color: var(--accent, #e07a5f);
+  margin: 0; font-size: clamp(1.8rem, 7vw, 2.6rem);
+}
+.discovery-modal blockquote {
+  margin: 0; font-size: clamp(1.1rem, 4.4vw, 1.5rem); line-height: 1.35;
+}
+.discovery-modal a { color: var(--ink-soft, #977f6d); }
