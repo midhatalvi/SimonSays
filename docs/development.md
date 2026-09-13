@@ -1,70 +1,63 @@
 # Developer guide
 
-> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
-
-[Home](../README.md) · [Architecture](architecture.md) · [Contributing](../CONTRIBUTING.md)
+[Documentation](README.md) · [Architecture](architecture.md) · [Validation](EVIDENCE_CASES.md) · [Contributing](../CONTRIBUTING.md)
 
 ## Requirements
 
-Node.js 20+ is recommended by the upstream README. Use npm and a modern browser with camera access. Internet access is needed for dependencies and the externally hosted MediaPipe model and WebAssembly files.
+- Node.js 20 or newer
+- npm
+- A modern browser with camera access
+- Internet access for MediaPipe model files and optional services
 
-## Run locally
+## Local setup
 
 ```bash
-git clone --branch improve/review-ready-interactions https://github.com/midhatalvi/SimonSays.git
+git clone https://github.com/midhatalvi/SimonSays.git
 cd SimonSays
+git switch design/a-little-lift
 npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite, normally `http://localhost:5174`. Allow the camera after selecting **Let's play**.
+Open `http://localhost:5174`. The local Vite plugin in `server/devApi.js` serves the same Tavily and ElevenLabs handlers used by Vercel.
 
-The game already imports the real detector from `vision/checkPose.js`. API keys are not required for local movement play: the voice client falls back to browser speech when the ElevenLabs endpoint is unavailable. The fake detector remains available for development but is not the active import.
+## Environment variables
 
-Vite exposes a network address, but phone camera access generally requires HTTPS. Use an HTTPS deployment for phone testing; a plain HTTP LAN address is not equivalent to localhost on the phone.
+Copy `.env.example` to `.env.local`, then fill only the services you need:
 
-## Optional API services
-
-```bash
-cp .env.example .env
-```
-
-| Server environment variable | Purpose |
+| Variable | Purpose |
 | --- | --- |
-| `ELEVENLABS_API_KEY` | Enables ElevenLabs speech through `/api/elevenlabs` |
-| `ELEVENLABS_VOICE_ID` | Optional voice override; omit it to use the proxy's built-in default |
-| `TAVILY_API_KEY` | Enables `/api/tavily` for the integrated discovery break |
+| `TAVILY_API_KEY` | Enables the accepted discovery break |
+| `ELEVENLABS_API_KEY` | Enables server-proxied speech |
+| `ELEVENLABS_VOICE_ID` | Optional voice override |
 
-The example file supplies a voice ID, so copying it selects that voice rather than the proxy's default. Keep keys server-side; do not use `VITE_` variables for secrets.
+`.env.local` is ignored by Git. Keep secrets server-side and never prefix them with `VITE_`.
 
-In the integrated local build, `npm run dev` runs the same Tavily and ElevenLabs handlers through `server/devApi.js`. Put the server keys in a gitignored `.env.local` and restart the server. Missing keys return a recoverable service error. Secrets are never exposed as `VITE_` variables. Accept the halfway offer to call Tavily; discovery is enabled by default.
+Without ElevenLabs, written prompts remain available and the client uses browser speech. Without Tavily, discovery shows a recoverable error and movement can continue.
 
-## Build and preview
+## Commands
 
-```bash
-npm run build
-npm run preview
-```
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Development UI plus local API handlers |
+| `npm test` | Synthetic engine, detector geometry, voice, and content tests |
+| `npm run build` | Production frontend build |
+| `npm run preview` | Static production build preview; does not run API handlers |
 
-The build creates `dist/`. Preview serves the built frontend; it does not run the API handlers. Use the preview URL printed in the terminal.
+The development-only `/?lab` screen exercises interface flow with synthetic camera, speech, and search inputs. It cannot validate webcam accuracy or live service behavior.
 
-## Deploy
+## Deployment
 
-The repository provides a Vite frontend and Vercel-compatible wrappers in `api/`. Configure the hosting project to build with `npm run build`, serve `dist/`, and run those wrappers. Set service keys in the hosting environment and test the resulting HTTPS URL.
+The `api/` directory exposes Vercel-compatible wrappers for Tavily and ElevenLabs. Configure the build as `npm run build`, serve `dist/`, and add service keys in the Vercel project environment. Use HTTPS for phone camera testing.
 
-The original project notes describe automatic deployment from `main`. That depends on the repository's external Vercel connection and is not established by the source files alone.
+## Verification before review
 
-## Verification
+1. Run `npm test` and `npm run build`.
+2. Run the complete synthetic session at `/?lab`, including discovery and results.
+3. Run the [live playtest](FIRST_PLAYTEST.md) on a laptop.
+4. Repeat it on a physical phone over HTTPS.
+5. Confirm camera release after timeout, ending, discovery, and replay.
+6. Test all selected movements, Simon Says commands, tricks, pause, repeat, skip, and three-life elimination.
+7. Test authenticated Tavily and ElevenLabs separately.
 
-```bash
-npm test
-npm run build
-```
-
-At `814f65c`, the upstream evidence records 31 passing automated synthetic cases and a passing production build. Tests use detector traces and mocked services; these results do not verify a physical camera or authenticated APIs.
-
-For simulated browser examples, run the development server and open `/?lab`. The labeled lab does not request a real camera or cloud speech and is excluded from production builds. Preserve the distinction between those examples and actual player observations.
-
-Follow the [evidence ledger](EVIDENCE_CASES.md) and [playtest guide](FIRST_PLAYTEST.md). Key manual checks are practice/retry/readiness, neutral before Go, pause/repeat/resume, tracking recovery, skipped-round scoring, camera release/restart, and replay. Check discovery gesture/button answers, evidence expansion, skip/search failure, and return to the same movement session. Test a physical phone over HTTPS and authenticated sponsor services separately.
-
-The playtest guide's old `127.0.0.1:5184` address was specific to its original session. Use the actual URL printed by your current Vite server (configured default: port 5174).
+Report automated, simulated-browser, API, and real-player evidence separately. Passing synthetic tests does not establish camera accuracy.

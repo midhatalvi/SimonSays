@@ -1,38 +1,32 @@
 # Contributing to Simon Says
 
-[Home](README.md) · [Developer setup](docs/development.md) · [Architecture](docs/architecture.md)
+[Project home](README.md) · [Documentation](docs/README.md) · [Developer guide](docs/development.md) · [Architecture](docs/architecture.md)
 
 ## Before editing
 
-Read the developer guide, then identify the area you are changing. Keep changes focused and preserve the simple React/Vite/JavaScript stack. This project was organized for two teammates working in parallel.
-
-## Folder ownership
-
-| Area | Owner | Responsibility |
-| --- | --- | --- |
-| `vision/` | Teammate | MediaPipe and pose detection |
-| `content/` | Teammate | Tavily round generation |
-| `server/tavily/` | Teammate | Tavily proxy |
-| `engine/` | Midhat | Game logic and rounds |
-| `voice/` | Midhat | ElevenLabs client |
-| `ui/` | Midhat | Start, game, and score screens |
-| `server/elevenlabs/` | Midhat | ElevenLabs proxy |
-| `shared/` | Both; locked contracts | Pose constants and interfaces |
-| `api/` | Both | Thin serverless wrappers |
-
-Coordinate before editing another person's area. Change shared contracts only after explicit agreement, and update `CLAUDE.md` in the same commit. Documentation cleanup does not authorize an interface change.
+Read the [current build](docs/current-build.md) and inspect the source before assuming a document describes implemented behavior. Keep changes focused and preserve the simple React/Vite/JavaScript stack.
 
 ## Working conventions
 
-- Keep code readable and dependencies minimal. Ask before adding dependencies or frameworks.
-- Keep API keys on the server and out of committed files.
-- Design for older adults: large text, high contrast, and one main action per screen.
-- Check camera assumptions on both laptops and phones over an appropriate secure origin.
-- Describe the app as movement and engagement; avoid treatment or clinical claims.
-- Distinguish implemented behavior from proposed work in documentation.
+- Keep camera inference in the browser and secret-bearing services behind server handlers.
+- Never commit `.env` files or credentials.
+- Design for older adults with readable text, strong contrast, clear state, large targets, and comfortable movement choices.
+- Keep the original Simon Says rules and product story unless the change explicitly revises them.
+- Treat `shared/` as a co-owned interface. Coordinate changes and update [shared contracts](shared/README.md).
+- Record only verification actually performed; distinguish synthetic tests from physical camera sessions.
+- Add dependencies only when the benefit justifies the new maintenance and loading cost.
 
-## Before proposing a change
+## Documentation expectations
 
-Run the build and the relevant [manual checks](docs/development.md#manual-verification). Describe what changed, why, and what was actually tested. Update the player guide for visible behavior changes and the architecture guide for component changes.
+- Visible behavior changes: update the [player guide](docs/player-guide.md) and [current build](docs/current-build.md).
+- Runtime or component changes: update [architecture](docs/architecture.md).
+- Interface changes: update [shared contracts](shared/README.md) and `CLAUDE.md`.
+- New checks or observed failures: update [validation evidence](docs/EVIDENCE_CASES.md).
 
-The original hackathon plan used a stub detector to unblock independent development. The real detector is now integrated; the review-branch engine additionally requires explicit tracking validity (main still uses the older contract). Use the development verification harness or a compatible detector mock.
+## Before opening or updating a PR
+
+1. Run `npm test` and `npm run build`.
+2. Run the relevant synthetic browser flow at `/?lab`.
+3. Perform the [live playtest](docs/FIRST_PLAYTEST.md) when camera behavior changes.
+4. Confirm secrets are excluded and `git diff --check` passes.
+5. Describe known limitations directly in the PR.

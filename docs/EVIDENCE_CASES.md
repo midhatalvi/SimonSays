@@ -1,103 +1,58 @@
-# Evidence ledger and example cases
+# Validation evidence
 
-> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
+[Documentation](README.md) · [Live playtest](FIRST_PLAYTEST.md) · [Current build](current-build.md)
 
-[Home](../README.md) · [Developer guide](development.md)
-## Evidence already available
+This ledger separates what has been verified from what remains uncertain. It contains no participant or health claims.
 
-Source: repository reviewed at baseline `c4dfe4f2a4d5891c5f21d8acb75409b4f52c15ce`. Confirm the actual checkout base with git history if applying this patch elsewhere.
+## Automated checks
 
-- Code observation: missing landmarks returned confidence zero; trick rounds treated low confidence until timeout as success. This motivates E01/E02. This was a static finding, not an observed participant incident.
-- Code observation: shoulder-width normalization and an optional landmark overlay already existed. They are not new accomplishments in this revision.
-- Code observation: sequential speech fetching and deliberate per-round waits existed. These support testing prefetch; they do not establish a measured delay.
-- Browser observation: original landing page used a warm character and large play button. No original camera session or participant study was completed.
-- Public competitor posts described AgentLedger and RHOast My Spend. Sean's encouraging comments are evidence of engagement with posts, not judging scores or user demand for Simon Says.
-  - https://www.linkedin.com/feed/update/urn:li:activity:7504775830904930304/
-  - https://www.linkedin.com/feed/update/urn:li:activity:7504753528502927360/
+`npm test` currently passes 52 cases. They cover:
 
-## Executable synthetic examples
+- tracking loss, intermittent tracking, readiness deadlines, pause, skip, and cancellation;
+- three lives, early elimination, completed sessions, and unscored rounds;
+- all six movement geometries, including wrong-side raises, finger-based touches, crossed and uncrossed shoulders, outward arms, missing landmarks, and portrait/landscape ratios;
+- voice caching, fetch and playback deadlines, browser fallback, and cancellation;
+- discovery source validation, answer mapping, malformed responses, service failure, and request limits.
 
-Run `npm test`. Inputs are fabricated detector traces or mocked network responses. They demonstrate engine/cache behavior only; they are not recordings of people or evidence of health outcomes.
+These tests use synthetic landmarks, detector traces, and mocked services. They do not prove real-camera accuracy.
 
-| ID | Example situation | Expected outcome | Automated coverage |
-|---|---|---|---|
-| E01 | Player is absent during a trick round | No score, never a pass | missing tracking cannot pass a trick round |
-| E02 | Player cannot be tracked during a movement | No penalty | loss of tracking cannot fail a movement round |
-| E03 | Player already holds the requested pose | Must relax before scoring can start | held-over pose must return to neutral |
-| E04 | Visible player stays neutral on a trick | Pass after the full active window | visible still player passes |
-| E05 | Visible player performs the trick pose after Go | Fail normally | moving on trick fails |
-| E06 | Tracking returns after interruption | Neutral readiness required; timing metric excluded | tracking recovery |
-| E07 | Player pauses to rest | No active time consumed while paused | pause consumes no response-window time |
-| E08 | Player skips or session is cancelled | No score | abort ends round without score |
-| E09 | Upcoming command is prepared and then requested again | One network request | preloading and playback share one request |
-| E10 | Voice request fails transiently | A later request can succeed | temporary speech failure is retryable |
-| E11 | Voice request hangs | Timeout permits browser fallback path | speech request timeout releases caller |
+## Browser flow checks
 
-## Browser checks performed
+The development-only `/?lab` flow has completed:
 
-Updated setup loads in Chrome at localhost. Deselecting every movement visibly disables Start practice and displays an instruction to choose one. Desktop layout inspected. Camera play, mobile layout, live ElevenLabs audio and full playback fallback remain unverified.
+- rules and movement rounds;
+- the halfway discovery offer;
+- a synthetic A/B answer and evidence disclosure;
+- return to the same movement session;
+- three-life elimination and results;
+- separate movement and discovery scoring.
 
-## Example participant worksheet — blank, not fabricated evidence
+The lab explicitly uses no camera, live speech, or live search.
 
-Case: an adult desk worker chooses left-hand-only play at relaxed pace. During round two their wrist leaves the camera view. They reposition, repeat the instruction, resume, and finish.
+## Live service checks
 
-Expected: timer pauses; no point/life penalty; recovery asks for neutral; instruction persists; participant can finish without assistance.
+- A local authenticated Tavily request returned “Which is the largest planet in our solar system?” with supporting evidence from NASA.
+- Missing Tavily configuration returns a recoverable error.
+- Authenticated ElevenLabs playback has not been verified in this review.
 
-Actual observation: NOT COLLECTED.
-Device / browser: ___
-Assistance needed: ___
-False judgments (with round context): ___
-Comfort and clarity, in participant's own words: ___
-Completed / replayed / returned later: ___
-Observer notes and follow-up change: ___
+No keys are committed. Local secrets remain in ignored environment files.
 
-Repeat this worksheet for an older adult with a family member, a player using written instructions, and a player selecting limited movements. Do not invent quotes, test participants, numerical improvements, or proof of demand.
+## Real-camera observations
 
-## Follow-up verification
+- The browser received permission and displayed the live camera.
+- A session reached a nose-touch instruction but did not recognize the performed gesture before timeout.
+- Another focused attempt reported both hands untracked before the instruction.
+- These observations led to fingertip-aware touch detection, movement-specific readiness, tracking hints, and aspect-ratio tests.
 
-- 17 automated tests now cover mid-round tracking loss, held-pose rejection, prepared audio completion, playback-rejection fallback, pre-cancelled speech and active playback cancellation. Audio/browser interfaces in those tests are mocks.
-- Chrome browser verification used the actual GameScreen and ScoreScreen through `?lab`, with explicitly labeled synthetic detector input and simulated speech. Confirmed tracking-lost message, repeat staying paused, neutral readiness after recovery, visible Go, pause preserving the command/countdown, and skip from pause.
-- Completed an all-skipped browser session: score 0, scored total 0, played rounds 6, unscored 6. The recap correctly said no rounds were scored; the injected detector's stop method was called. This does not establish physical webcam release.
-- Inspected the game at 390×844 viewport. Compact mascot and sticky controls keep the instruction/recovery flow usable at this width. Inspected setup at the same width and selected the 12-second pace. This is responsive emulation, not an actual phone trial.
-- Fixed preview placement: the actual camera now mounts inside its reserved layout slot instead of floating over controls. Its populated layout still needs a real-camera check.
-- Fixed the zero-score spoken recap and added cancellation when leaving the result screen.
-- The synthetic verification module is development-only and excluded from the production JS build.
-- Real-camera recognition, live ElevenLabs playback/latency, physical-device diversity and participant usefulness remain NOT TESTED. See FIRST_PLAYTEST.md.
+A complete successful real-camera session has not yet been observed after those corrections.
 
-## Review-branch browser verification (2026-09-13)
+## Still required before calling the demo reliable
 
-Using the development-only `?lab` harness and synthetic detector/speech inputs:
-- Completed practice, selected Practice again, and verified a second unscored practice attempt.
-- Skipped practice and explicitly selected I’m ready to enter round 1.
-- Injected missing tracking and observed the camera-loss/timer-paused message.
-- Repeated the instruction and observed the round stay paused with Resume available.
-- Ended the session while paused and observed return to setup and Detector released: Yes.
+- Complete all six movements on a laptop webcam.
+- Complete the same acceptance flow on a physical phone over HTTPS.
+- Verify tricks, three-life elimination, pause/repeat/skip, timeout recovery, camera release, discovery, and replay.
+- Record false positives, false negatives, device/browser, framing, and lighting.
+- Verify authenticated ElevenLabs playback and timing.
+- Test with older adults and record comprehension and comfort in their own words.
 
-These are browser interaction checks, not real-camera accuracy or live ElevenLabs latency measurements. Real participants and device coverage remain pending in FIRST_PLAYTEST.md.
-
-## Learn & Move validation
-
-Added automated cases for source/domain requirements, unsafe citation URLs, answer shuffling, exclusive vs ambiguous gesture selection, missing tracking, neutral readiness, missing API configuration, and partial upstream failure.
-
-Chrome synthetic learning example completed practice A and B, answered the question incorrectly, showed the correct answer and citation excerpt/link, then showed 0 correct from 1 answered. Both practice answers were excluded. This uses fixtures, not live search or real camera input.
-
-Live Tavily retrieval depends on the deployment key. Evidence matching uses reviewed topic templates; it is not semantic fact-checking or arbitrary question generation. Four question templates (two per topic) are the current coverage. Participant validation and real-device gesture accuracy remain pending.
-
-## Integrated discovery browser examples — 2026-09-13
-
-These are executed synthetic UI cases, not participant evidence or live sponsor checks. Run `npm run dev`, open `/?lab`, select Movement and run the example. The detector and speech are simulated; no camera, microphone, or live search is requested.
-
-- Completed practice, continued through three movement rounds, accepted “Explore one fact”, chose A for the synthetic Jupiter question, expanded “Explore this fact”, and returned to movement. Final displayed result: movement 2/6, discovery 1 correct from 1 answered, six movement rounds played. Discovery did not increase the movement score or round count.
-- Reset the example, enabled “Simulate search failure”, completed practice and three movement rounds, accepted the break, observed the unavailable-search message, and used “Return to movement”. The session resumed rather than returning to setup.
-- Existing 25 automated cases pass, including tracking fairness, source validation, ambiguous gestures, and speech cancellation. Production build passes.
-
-Pending real-use validation: camera release/restart on actual hardware; two comfortable gesture mappings with older adults; comprehension of the switch from Simon says rules to A/B questions; pause/repeat discoverability; authenticated live Tavily/ElevenLabs verification. The 16-second client timeout is implemented but was not timed in the browser check. No cognitive benefit, retention, or accessibility-compliance result is established.
-
-## Tavily efficiency and usability checks — 2026-09-13
-
-- Controlled API responses verified one search for a supported first result (previously two), at most two attempts when fallback is needed, one shared 12-second deadline, allowed source domains, and no upstream calls for invalid requests. This is a measured request-count reduction in the fixture, not measured production latency or billing.
-- Fallback now runs sequentially; when needed it can take longer than the former parallel approach, but cannot extend the shared deadline. No cross-session cache was added. Live content and retrieval dates remain honest.
-- Network failures, malformed JSON, unsupported evidence, empty client results, and client cancellation are covered by automated tests. Client cancellation does not guarantee cancellation of an already-running server-side Tavily request; that work remains bounded by the server deadline.
-- Browser checks with synthetic input verified Repeat disables answers, Resume restores them, Skip gives no answer credit, and an incorrect answer reveals a supportive explanation. Fixed the repeated-question status so it explicitly says “Paused. Select Resume when you are ready to answer.” Rechecked the corrected message.
-- 31 automated tests and the production build pass. Earlier integrated-session success and failure examples remain documented above.
-- No callable Tavily plugin tools or local Tavily API key were available. Live API latency, real billing, real gesture usability, and older-adult comprehension remain unverified. This is a functional usability check, not a participant study.
+Do not describe passing automated tests as proof of accessibility, camera accuracy, health benefit, adoption, or production readiness.

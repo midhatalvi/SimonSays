@@ -1,19 +1,31 @@
-# Simon Says: A little lift
+# Design direction — A little lift
 
-The identity starts with approachable movement and good company: a small gesture that lifts the day. Landscape’s portfolio was reviewed as a benchmark for coherent, purpose-led systems, including Modal’s dimensional imagery and Journ’s sensory expression of ritual. No portfolio assets or client identities are used.
+[Documentation](README.md) · [Why Simon Says exists](project-story.md) · [Player guide](player-guide.md)
 
-## Identity
-Plum ink (#402C45) and action plum (#553661) carry text and controls. Butter yellow (#F5E7A3) gives Simon a warm stage; lilac (#EAE2F2) connects movement selection, guidance, and discovery. Locally hosted, OFL-licensed Fraunces provides expressive headlines; DM Sans keeps instructions direct. The original lifted-loop mark, waving lilac Simon, and six movement diagrams share rounded gestures. Simon retains the existing sprout motif for continuity. The welcome wave runs once; reduced-motion preferences disable animation and transitions.
+## Idea
 
-## Product
-A welcome screen leads to movement selection, pace, and default-enabled optional discovery. The original three-life rules run for up to six rounds, with no practice. Pause/repeat/skip, evidence-backed optional discovery, and separate discovery scoring remain available.
+The identity presents movement as a small, welcome lift in the day. Simon is a warm companion who invites attention and movement without fitness pressure. The work uses Landscape Studio’s portfolio as a standard for specificity and coherence, not as a visual template; no agency or client identity is copied.
 
-Based on the merged review revision, with subsequent user-requested engine, recognition, and speech corrections documented in [current build](current-build.md). Browser zoom is enabled. Native control semantics, large label targets, visible keyboard focus, and reduced motion are preserved. No camera is requested on welcome or setup.
+## Visual system
 
-## Validation
-The current production build and 52 automated tests pass. Earlier Chrome checks verified movement selection and its empty-selection guard, pace, discovery toggle, desktop and 390px layouts. Subsequent synthetic browser checks verified discovery answers, return to movement, three-life elimination, and separate results. See the current-build evidence for scope and limitations.
+- **Plum ink and action plum** carry text and controls with strong contrast.
+- **Butter yellow** gives Simon a warm stage.
+- **Lilac** connects setup, guidance, camera state, and discovery.
+- **Fraunces** gives headlines warmth and character.
+- **DM Sans** keeps instructions and controls direct.
 
-Earlier screenshots may precede the latest gameplay changes. A live Tavily request returned a NASA-supported question. Live webcam sessions connected but did not establish a successful complete playthrough; recognition accuracy and live ElevenLabs remain unverified.
+Both type families are hosted locally under the included SIL Open Font License files. The lifted-loop mark, waving lilac Simon, and movement diagrams share rounded forms. Motion is brief and supportive; reduced-motion preferences disable it.
 
-## Run
-Install dependencies with `npm install`, then use `npm run dev`. Use `npm run build` and `npm run preview` for the production bundle. Configure server-side voice and search credentials according to the existing project documentation.
+## Interaction principles
+
+1. One clear primary action at each decision point.
+2. Written instructions remain available when voice fails.
+3. Camera permission begins only after setup.
+4. Lives, timing, camera state, and recovery are visible.
+5. Controls use large targets and visible keyboard focus.
+6. Discovery feels like an optional change of pace and returns to the same session.
+7. Feedback encourages the player while preserving the classic game rules.
+
+## Current scope
+
+The welcome, setup, live game, discovery, and results share one visual identity. Responsive behavior supports narrow screens, but a real phone acceptance pass remains required. See [validation evidence](EVIDENCE_CASES.md) for completed checks and limitations.
