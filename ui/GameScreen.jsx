@@ -124,10 +124,9 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
         if (index === 1 && settings.discovery && !signal.aborted) {
           stopVision(); setCameraReady(false);
           discoveryChoice.current = null;
-          setDiscovery('offer');
+          setDiscovery('learn'); // ask the question directly, hands-free
           while (!discoveryChoice.current && !signal.aborted) await wait(100);
           if (signal.aborted) break;
-          if (discovered.current) sessionRounds[index + 1] = discovered.current.movement;
           setDiscovery(null);
           // Let the discovery screen release its detector before movement resumes.
           await wait(100);
@@ -173,6 +172,13 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
         answered: previous.answered + (summary?.answered || 0),
         items: [...previous.items, discovered.current], item: discovered.current,
       };
+    } else if (discovery === 'learn' && summary) {
+      const previous = discoveryResult.current || { correct: 0, answered: 0, items: [] };
+      discoveryResult.current = {
+        ...previous,
+        correct: previous.correct + (summary.correct || 0),
+        answered: previous.answered + (summary.answered || 0),
+      };
     }
     setDiscovery(null); discoveryChoice.current = 'continue';
   }
@@ -188,6 +194,8 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     onSkip={() => finishDiscovery()} onContinue={item => {
       discovered.current = item; setSessionDiscovery(item); finishDiscovery();
     }} />;
+  if (discovery === 'learn') return <LearnScreen settings={settings} runtime={runtime}
+    onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
   if (discovery === 'recall') return <LearnScreen settings={settings} runtime={runtime} discoveryItem={sessionDiscovery}
     onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
   if (error) return <div className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">LET’S GET YOU CONNECTED</p><h1>Camera setup needs another try</h1>
