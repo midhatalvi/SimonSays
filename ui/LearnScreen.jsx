@@ -39,14 +39,22 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
     const signal = controller.signal;
     setReady(false); setResult(undefined); setPaused(false); pause.current = false;
     let didAnswer = false;
-    const accept = answer => {
+    const accept = async answer => {
       if (signal.aborted || didAnswer) return;
       didAnswer = true; setReady(false); setResult(answer);
       if (!practice && answer != null) { totals.current.answered++; if (answer === card.correct) totals.current.correct++; }
       const text = answer == null ? 'Skipped without penalty. Continue when you are ready.' : practice
         ? answer === card.correct ? 'You chose the requested answer. Ready for the next step?' : 'That was the other answer. You can practice again.'
         : answer === card.correct ? `Correct. ${card.answers[card.correct]}. ${card.source.excerpt}` : `The supported answer is ${card.answers[card.correct]}. ${card.source.excerpt}`;
-      setStatus(text); void runtime.say(text, { signal });
+      setStatus(text);
+      await runtime.say(text, { signal });
+      if (signal.aborted) return;
+      // After a real (non-practice) answer: let them read the fact, hold 5s, then continue automatically.
+      if (!practice && answer != null) {
+        await new Promise(r => setTimeout(r, 5000));
+        if (signal.aborted) return;
+        if (onFinish) onFinish({ ...totals.current }); else setStep(s => s + 1);
+      }
     };
     controller.accept = accept;
     (async () => {
@@ -90,7 +98,7 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
       {!buttons && <div id="camera-preview-slot" aria-label="Camera preview" />}
       <p>{practice ? `Practice ${step + 1} of 2` : `Question ${step - 1} of ${questions.length} · ${settings.topic}`}</p>
       <h2>{card.question}</h2>
-      <div className="play-controls">{card.answers.map((answer, i) => <div key={i} className="answer-card">
+      <div className="play-controls">{card.answers.map((answer, i) => ({ answer, i })).reverse().map(({ answer, i }) => <div key={i} className="answer-card">
         <strong>{i === 0 ? 'A' : 'B'}: {answer}</strong>
         {buttons ? <button disabled={!ready || paused || result !== undefined} onClick={() => turn.current?.accept?.(i)}>Choose {i === 0 ? 'A' : 'B'}</button>
           : <p>{names[poses[i]]}</p>}
@@ -101,10 +109,11 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
         <button disabled={!ready || repeatBusy} onClick={repeat}>Repeat question</button>
         <button disabled={!ready || repeatBusy} onClick={skip}>Skip — no penalty</button>
       </div> : <>
-        {!practice && <section aria-label="Answer evidence">
-          <details><summary>Explore this fact</summary><blockquote>{card.source.excerpt}</blockquote>
+        {!practice && <section aria-label="Answer evidence" className="fact-detail">
+          <h3>More about {card.answers[card.correct]}</h3>
+          <blockquote>{card.source.excerpt}</blockquote>
           <a href={card.source.url} target="_blank" rel="noopener noreferrer">Read source: {card.source.title}</a>
-          {!discoveryItem && <p>{card.source.synthetic ? 'Synthetic example — no live retrieval' : 'Source from discovery'}</p>}</details>
+          <p className="auto-advance-note">Continuing in a few seconds…</p>
         </section>}
         <div className="play-controls">
           {practice && <button onClick={() => { setQuestions([...questions]); }}>Practice again</button>}
