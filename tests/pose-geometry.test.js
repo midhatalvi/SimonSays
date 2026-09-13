@@ -21,8 +21,8 @@ test('relaxed seated upper body is ready for all six movements and matches none'
     assert.ok(r.confidence < .35, pose);
   }
 });
-test('nose touch accepts either fingertip when the wrist is away from the face', () => {
-  for (const finger of [19,20]) {
+test('nose touch accepts any available fingertip when the wrist is away from the face', () => {
+  for (const finger of [17,19,20,22]) {
     const lm = body(); move(lm,finger,.5,.25);
     assert.ok(read('TOUCH_NOSE',lm).confidence >= .55);
     assert.equal(read('TOUCH_NOSE',lm).ready,false);
@@ -32,6 +32,12 @@ test('an unseen wrist does not hide a clearly visible fingertip touch', () => {
   const lm = body(); lm[15].visibility=0; lm[16].visibility=0;
   move(lm,19,.5,.25);
   assert.equal(read('TOUCH_NOSE',lm).tracking,true);
+  assert.ok(read('TOUCH_NOSE',lm).confidence >= .55);
+});
+test('nose touch remains tracked when the hand briefly obscures the nose', () => {
+  const lm = body(); move(lm,19,.5,.25);
+  lm[0].visibility = .2;
+  assert.equal(read('TOUCH_NOSE',lm).tracking, true);
   assert.ok(read('TOUCH_NOSE',lm).confidence >= .55);
 });
 test('top-of-head touch matches while a nose touch is not a head touch', () => {

@@ -8,6 +8,7 @@ import { hasPoseTracking, updatePoseHold } from './poseTracking.js';
 
 const MATCH_THRESHOLD = 0.55;
 const VISIBILITY_MIN = 0.5;
+const CLOSE_TO_FACE_VISIBILITY_MIN = 0.15;
 const MIN_INFERENCE_INTERVAL_MS = 50; // Up to 20 fresh frames/sec, without queuing work.
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
@@ -39,6 +40,10 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const isVisible = (pt) => pt != null && Number.isFinite(pt.x) && Number.isFinite(pt.y)
   && (pt.visibility ?? 1) >= VISIBILITY_MIN && (pt.presence ?? 1) >= VISIBILITY_MIN;
+const isCloseToFaceVisible = (pt) =>
+  pt != null && Number.isFinite(pt.x) && Number.isFinite(pt.y)
+  && (pt.visibility ?? 1) >= CLOSE_TO_FACE_VISIBILITY_MIN
+  && (pt.presence ?? 1) >= CLOSE_TO_FACE_VISIBILITY_MIN;
 
 function mountPreview() {
   if (state.video) return;
@@ -157,8 +162,9 @@ function detectLoop(attempt) {
 
 const shoulderWidth = (lm) => dist(lm[IDX.LEFT_SHOULDER], lm[IDX.RIGHT_SHOULDER]);
 
-function handPoints(lm, side) {
-  return (side === 'left' ? [15, 19, 21] : [16, 20, 22]).map(i => lm[i]).filter(isVisible);
+function handPoints(lm, side, isPointVisible = isVisible) {
+  return (side === 'left' ? [15, 17, 19, 21] : [16, 18, 20, 22])
+    .map(i => lm[i]).filter(isPointVisible);
 }
 
 function touchScore(points, anchor, scale, tolerance) {
@@ -208,9 +214,15 @@ function touchHeadScore(lm) {
 
 function touchNoseScore(lm) {
   const nose = lm[IDX.NOSE];
-  if (!isVisible(nose)) return 0;
+  const leftShoulder = lm[IDX.LEFT_SHOULDER];
+  const rightShoulder = lm[IDX.RIGHT_SHOULDER];
+  if (!isCloseToFaceVisible(nose) || !isVisible(leftShoulder) || !isVisible(rightShoulder)) return 0;
   const scale = shoulderWidth(lm) || 0.001;
-  return touchScore([...handPoints(lm, 'left'), ...handPoints(lm, 'right')], nose, scale, 0.6);
+  const points = [
+    ...handPoints(lm, 'left', isCloseToFaceVisible),
+    ...handPoints(lm, 'right', isCloseToFaceVisible),
+  ];
+  return touchScore(points, nose, scale, 1.1);
 }
 
 function touchShouldersScore(lm) {
@@ -272,7 +284,8 @@ export function scoreFor(target, lm) {
 export function evaluatePose(target, landmarks, aspect = 4 / 3) {
   if (!landmarks || !Number.isFinite(aspect) || aspect <= 0) return { tracking: false, confidence: 0, ready: false };
   const lm = landmarks.map(p => p && ({ ...p, x: p.x * aspect }));
-  const tracking = hasPoseTracking(target, lm, isVisible) && shoulderWidth(lm) > 0.03;
+  const tracking = hasPoseTracking(target, lm, isVisible, isCloseToFaceVisible)
+    && shoulderWidth(lm) > 0.03;
   if (!tracking) return { tracking: false, confidence: 0, ready: false };
   const confidence = scoreFor(target, lm);
   // Readiness is specific to the commanded limb. An unused hand need not be
