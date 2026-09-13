@@ -13,7 +13,7 @@ const labels = {
   paused: 'Paused. Take your time.',
 };
 
-export default function GameScreen({ onDone, settings, runtime = liveRuntime }) {
+export default function GameScreen({ onDone, settings, onExit, runtime = liveRuntime }) {
   const { checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech } = runtime;
   const [prompt, setPrompt] = useState('Getting the camera ready…');
   const [status, setStatus] = useState('Loading the movement detector…');
@@ -21,6 +21,8 @@ export default function GameScreen({ onDone, settings, runtime = liveRuntime }) 
   const [countdown, setCountdown] = useState(null);
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState(false);
+  const [practiceReview, setPracticeReview] = useState(false);
+  const practiceChoice = useRef(null);
   const [repeatBusy, setRepeatBusy] = useState(false);
   const [canControl, setCanControl] = useState(false);
   const pausedRef = useRef(false), activeController = useRef(null), session = useRef(null);
@@ -46,7 +48,9 @@ export default function GameScreen({ onDone, settings, runtime = liveRuntime }) 
       if (signal.aborted) return;
       if (getVisionStatus().status !== 'ready') { setError(true); stopVision(); return; }
       const results = [];
-      for (const [index, round] of [practice, ...rounds].entries()) {
+      const sessionRounds = [practice, ...rounds];
+      for (let index = 0; index < sessionRounds.length; index++) {
+        const round = sessionRounds[index];
         if (signal.aborted) break;
         while (pausedRef.current && !signal.aborted) await wait(100);
         if (signal.aborted) break;
@@ -56,8 +60,8 @@ export default function GameScreen({ onDone, settings, runtime = liveRuntime }) 
         setStatus(index === 0 ? 'Practice — no score. Listen, relax your hands, then wait for Go.' : 'Listen, relax your hands, then wait for Go.');
         const next = rounds[index];
         if (next) void prepareSpeech(next.spokenText || next.promptText);
-        const positive = index === 0 ? 'Practice complete. Choose Skip whenever a move is uncomfortable.' : reactionFor(true, round.simonSays);
-        const negative = index === 0 ? 'Practice complete. We can try that again another time.' : reactionFor(false, round.simonSays);
+        const positive = index === 0 ? 'You did it. Practice again, or start when you feel ready.' : reactionFor(true, round.simonSays);
+        const negative = index === 0 ? 'No score in practice. Try again, or choose a different movement in setup.' : reactionFor(false, round.simonSays);
         const unscored = 'No score for this round. Let’s try another.';
         void prepareSpeech(positive);
         void prepareSpeech(negative);
@@ -80,6 +84,14 @@ export default function GameScreen({ onDone, settings, runtime = liveRuntime }) 
         const feedback = result.passed == null ? unscored : result.passed ? positive : negative;
         setStatus(feedback);
         await say(feedback, { signal });
+        if (index === 0 && !signal.aborted) {
+          practiceChoice.current = null;
+          setPracticeReview(true);
+          while (!practiceChoice.current && !signal.aborted) await wait(100);
+          if (signal.aborted) break;
+          setPracticeReview(false);
+          if (practiceChoice.current === 'retry') index--;
+        }
       }
       if (!signal.aborted) {
         stopVision();
@@ -102,7 +114,8 @@ export default function GameScreen({ onDone, settings, runtime = liveRuntime }) 
   }
   if (error) return <div className="screen"><h1>Camera setup needs another try</h1>
     <p>Check camera permission and your connection, then reload. You have not lost any points.</p>
-    <button className="big-btn" onClick={() => window.location.reload()}>Try again</button></div>;
+    <button className="big-btn" onClick={() => window.location.reload()}>Try again</button>
+    {onExit && <button onClick={onExit}>Back to setup</button>}</div>;
   return <div className="screen fair-game">
     <div id="camera-preview-slot" aria-label="Camera preview" />
     <p>{roundNumber === 0 ? 'Practice' : `Round ${roundNumber} of 6`}</p>
@@ -110,6 +123,10 @@ export default function GameScreen({ onDone, settings, runtime = liveRuntime }) 
     <h1 className="instruction">{prompt}</h1>
     <p role="status" aria-live="polite">{status}</p>
     {countdown != null && <p aria-label="Seconds remaining">{countdown}s remaining</p>}
+    {practiceReview && <div className="play-controls" aria-label="Practice choices">
+      <button onClick={() => { practiceChoice.current = 'retry'; }}>Practice again</button>
+      <button onClick={() => { practiceChoice.current = 'start'; }}>I’m ready — start game</button>
+    </div>}
     <div className="play-controls">
       <button disabled={!canControl || repeatBusy} onClick={() => {
         pausedRef.current = !pausedRef.current; setPaused(pausedRef.current);
@@ -118,6 +135,7 @@ export default function GameScreen({ onDone, settings, runtime = liveRuntime }) 
       <button disabled={!canControl || repeatBusy} onClick={() => {
         pausedRef.current = false; setPaused(false); skip.current = true; activeController.current?.abort();
       }}>Skip — no penalty</button>
+      {onExit && <button onClick={onExit}>End session / change movements</button>}
     </div>
   </div>;
 }

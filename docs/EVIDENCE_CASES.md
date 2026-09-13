@@ -60,3 +60,14 @@ Repeat this worksheet for an older adult with a family member, a player using wr
 - Fixed the zero-score spoken recap and added cancellation when leaving the result screen.
 - The synthetic verification module is development-only and excluded from the production JS build.
 - Real-camera recognition, live ElevenLabs playback/latency, physical-device diversity and participant usefulness remain NOT TESTED. See FIRST_PLAYTEST.md.
+
+## Review-branch browser verification (2026-09-13)
+
+Using the development-only `?lab` harness and synthetic detector/speech inputs:
+- Completed practice, selected Practice again, and verified a second unscored practice attempt.
+- Skipped practice and explicitly selected I’m ready to enter round 1.
+- Injected missing tracking and observed the camera-loss/timer-paused message.
+- Repeated the instruction and observed the round stay paused with Resume available.
+- Ended the session while paused and observed return to setup and Detector released: Yes.
+
+These are browser interaction checks, not real-camera accuracy or live ElevenLabs latency measurements. Real participants and device coverage remain pending in FIRST_PLAYTEST.md.

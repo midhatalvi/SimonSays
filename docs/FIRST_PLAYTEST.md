@@ -39,3 +39,5 @@ Finished? ___ Voluntary replay? ___ Optional return on another day? ___
 Next change justified by this observation: ___
 
 A passed session does not establish population-wide accessibility or health benefits. Use several adults across different needs to guide the next revision, not to manufacture an adoption statistic.
+
+Before scored play, ask participants to try Practice again and then choose I’m ready. Confirm they can end a session to change movements. Record whether they understood the readiness choice without prompting.

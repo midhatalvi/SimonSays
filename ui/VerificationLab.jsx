@@ -36,7 +36,7 @@ export default function VerificationLab() {
     {phase === 'setup' && <div className="screen"><button className="big-btn" onClick={() => {
       setStopped(false); setPhase('game');
     }}>Run example session</button></div>}
-    {phase === 'game' && <GameScreen key={generation} runtime={runtime} settings={settings} onDone={r => {
+    {phase === 'game' && <GameScreen key={generation} runtime={runtime} settings={settings} onExit={() => setPhase("setup")} onDone={r => {
       setResult(r); setPhase('score');
     }} />}
     {phase === 'score' && <><ScoreScreen {...result} speak={runtime.say} onPlayAgain={() => setPhase('setup')} />

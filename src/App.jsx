@@ -22,7 +22,7 @@ function PlayerApp() {
 
   if (phase === "game")
     return (
-      <GameScreen settings={settings}
+      <GameScreen settings={settings} onExit={() => setPhase("start")}
         onDone={(r) => {
           setResult(r);
           setPhase("score");

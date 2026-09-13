@@ -6,103 +6,103 @@ TAP version 13
 # Subtest: missing tracking cannot pass a trick round
 ok 1 - missing tracking cannot pass a trick round
   ---
-  duration_ms: 0.526708
+  duration_ms: 0.522458
   type: 'test'
   ...
 # Subtest: loss of tracking cannot fail a movement round
 ok 2 - loss of tracking cannot fail a movement round
   ---
-  duration_ms: 0.139125
+  duration_ms: 0.132584
   type: 'test'
   ...
 # Subtest: held-over pose must return to neutral before it can score
 ok 3 - held-over pose must return to neutral before it can score
   ---
-  duration_ms: 0.103375
+  duration_ms: 0.10075
   type: 'test'
   ...
 # Subtest: visible still player passes full trick window
 ok 4 - visible still player passes full trick window
   ---
-  duration_ms: 0.056333
+  duration_ms: 0.060959
   type: 'test'
   ...
 # Subtest: moving on trick fails after neutral readiness
 ok 5 - moving on trick fails after neutral readiness
   ---
-  duration_ms: 0.116209
+  duration_ms: 0.118417
   type: 'test'
   ...
 # Subtest: tracking recovery requires neutral and excludes timing metric
 ok 6 - tracking recovery requires neutral and excludes timing metric
   ---
-  duration_ms: 0.063917
+  duration_ms: 0.062041
   type: 'test'
   ...
 # Subtest: pause consumes no response-window time
 ok 7 - pause consumes no response-window time
   ---
-  duration_ms: 0.152375
+  duration_ms: 0.15075
   type: 'test'
   ...
 # Subtest: abort ends round without score
 ok 8 - abort ends round without score
   ---
-  duration_ms: 0.0965
+  duration_ms: 0.09525
   type: 'test'
   ...
 # Subtest: mid-round tracking loss does not consume the remaining trick window
 ok 9 - mid-round tracking loss does not consume the remaining trick window
   ---
-  duration_ms: 0.224
+  duration_ms: 0.230084
   type: 'test'
   ...
 # Subtest: a held pose never scores without a neutral transition
 ok 10 - a held pose never scores without a neutral transition
   ---
-  duration_ms: 0.616542
+  duration_ms: 0.593167
   type: 'test'
   ...
 # Subtest: preloading and playback share one request
 ok 11 - preloading and playback share one request
   ---
-  duration_ms: 0.653875
+  duration_ms: 0.563667
   type: 'test'
   ...
 # Subtest: temporary speech failure is retryable
 ok 12 - temporary speech failure is retryable
   ---
-  duration_ms: 0.532542
+  duration_ms: 0.448917
   type: 'test'
   ...
 # Subtest: speech request timeout releases caller for fallback
 ok 13 - speech request timeout releases caller for fallback
   ---
-  duration_ms: 11.809458
+  duration_ms: 11.868959
   type: 'test'
   ...
 # Subtest: successful prepared audio completes and releases player
 ok 14 - successful prepared audio completes and releases player
   ---
-  duration_ms: 1.857584
+  duration_ms: 2.538541
   type: 'test'
   ...
 # Subtest: audio playback rejection falls back to browser speech
 ok 15 - audio playback rejection falls back to browser speech
   ---
-  duration_ms: 0.94125
+  duration_ms: 1.283708
   type: 'test'
   ...
 # Subtest: already cancelled speech makes no network or playback request
 ok 16 - already cancelled speech makes no network or playback request
   ---
-  duration_ms: 0.652
+  duration_ms: 0.645
   type: 'test'
   ...
 # Subtest: aborting while audio plays ends promptly
 ok 17 - aborting while audio plays ends promptly
   ---
-  duration_ms: 0.74275
+  duration_ms: 0.809084
   type: 'test'
   ...
 1..17
@@ -113,7 +113,7 @@ ok 17 - aborting while audio plays ends promptly
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 48.876
+# duration_ms 47.219291
 
 > simonsays@0.0.1 build
 > vite build
@@ -125,5 +125,5 @@ rendering chunks...
 computing gzip size...
 dist/index.html                   0.80 kB │ gzip:  0.43 kB
 dist/assets/index-CtJWLx2l.css   11.03 kB │ gzip:  3.12 kB
-dist/assets/index-zxzVYRaa.js   289.41 kB │ gzip: 91.98 kB
-✓ built in 407ms
+dist/assets/index-zQ_7if9r.js   290.05 kB │ gzip: 92.20 kB
+✓ built in 392ms

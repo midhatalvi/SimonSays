@@ -14,7 +14,7 @@ Deploy to Vercel to use the `/api` handlers. The Vite-only preview does not serv
 - Detector returns explicit tracking validity. Missing/stale landmarks cannot score as stillness.
 - After the instruction finishes, return to a neutral pose; the visible Go state opens scoring. Movement during the instruction is not scored. The full instruction remains visible.
 - Tracking loss and manual pause freeze the response window and require neutral readiness on return. Tracking loss lasting 15 seconds leaves the round unscored.
-- Practice, selected movements, 5/8/12-second response windows, pause, repeat (remains paused until Resume), and skip without penalty.
+- Repeatable practice with an explicit readiness choice; exit to setup at any time; selected movements, 5/8/12-second response windows, pause, repeat (remains paused until Resume), and skip without penalty.
 - Gentle six-round session; no elimination. Skips and tracking timeouts are excluded from the denominator. Response-time metrics are not presented as cognitive measurements.
 - Next command audio prefetch, bounded in-flight deduplication/cache, timeout, browser speech fallback, URL cleanup, and camera teardown.
 
@@ -24,7 +24,7 @@ Tavily code remains present but is not connected to the active game. No latency,
 
 ## Review
 
-Changes are on local branch `improve/fair-play-audio`. Public deployment is unchanged. Existing dependency audit findings require separate review before production use.
+Review branch: `improve/review-ready-interactions`, targeting `main`. Merging and production deployment are separate from this review. Existing dependency audit findings require separate review before production use.
 
 ## Observed-session handoff
 
