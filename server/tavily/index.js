@@ -1,46 +1,35 @@
-// ============================================================================
-// /server/tavily — Tavily proxy  (TEAMMATE OWNS THIS)
-// ============================================================================
-// Vercel serverless function. Keeps TAVILY_API_KEY server-side; the client
-// calls this instead of Tavily directly.
-//
-// Deployed path: /api/tavily  (Vercel maps /api/* to serverless functions;
-// you may need to move/symlink this to /api/tavily.js at integration time —
-// confirm the api routing with Midhat before changing repo layout.)
-//
-// Env var needed on Vercel: TAVILY_API_KEY
-// ============================================================================
-
+import { TOPICS, supportedQuestion } from '../../content/learningQuestions.js';
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "POST only" });
-    return;
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  const topic = req.body?.topic;
+  if (!Object.hasOwn(TOPICS, topic)) return res.status(400).json({ error: 'Choose Space or Animals.' });
   const key = process.env.TAVILY_API_KEY;
-  if (!key) {
-    res.status(500).json({ error: "TAVILY_API_KEY not set" });
-    return;
+  if (!key) return res.status(503).json({ error: 'Discovery search is not configured. You can return to movement.' });
+  try {
+    // One question is shown per break. Search the second template only when needed.
+    // Both attempts share a deadline, so fallback cannot double the waiting time.
+    const signal = AbortSignal.timeout(12000);
+    for (const template of TOPICS[topic]) {
+      if (signal.aborted) break;
+      try {
+        const response = await fetch('https://api.tavily.com/search', {
+          method: 'POST', signal,
+          headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: template.query, include_domains: template.domains,
+            max_results: 3, search_depth: 'advanced', include_answer: false }),
+        });
+        if (!response.ok) continue;
+        const data = await response.json();
+        const question = supportedQuestion(template, data.results);
+        if (!question) continue;
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json({ questions: [question], topic });
+      } catch {
+        // An unavailable or malformed result must not become an unsupported fact.
+      }
+    }
+    return res.status(503).json({ error: 'No supported question is available. Return to movement and try discovery another time.' });
+  } catch {
+    return res.status(503).json({ error: 'Learning search is unavailable. Please try again later.' });
   }
-  const { query, max_results } = req.body || {};
-  if (!query) {
-    res.status(400).json({ error: "missing query" });
-    return;
-  }
-
-  const r = await fetch("https://api.tavily.com/search", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query,
-      search_depth: "basic",
-      max_results: max_results || 5,
-      include_answer: true, // short synthesized line, good for TTS
-    }),
-  });
-
-  if (!r.ok) {
-    res.status(r.status).json({ error: "tavily request failed" });
-    return;
-  }
-  res.status(200).json(await r.json());
 }

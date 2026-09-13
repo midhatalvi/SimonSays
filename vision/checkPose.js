@@ -22,13 +22,14 @@ const IDX = {
 
 const state = {
   status: "idle", error: null, landmarker: null,
-  video: null, canvas: null, ctx: null,
+  video: null, canvas: null, ctx: null, stream: null, wrap: null, layout: null,
   latestLandmarks: null, lastTimestamp: -1,
 };
 
 // Off by default so real players just see a plain mirror of themselves, not
 // dots tracking their face. The test page turns this on for tuning.
 let debugOverlay = false;
+let generation = 0;
 export function setDebugOverlay(on) {
   debugOverlay = !!on;
 }
@@ -62,6 +63,7 @@ function mountPreview() {
     }
   };
   updatePreviewLayout();
+  state.wrap = wrap; state.layout = updatePreviewLayout;
   window.addEventListener("resize", updatePreviewLayout);
   window.addEventListener("orientationchange", updatePreviewLayout);
   const video = document.createElement("video");
@@ -71,7 +73,13 @@ function mountPreview() {
   canvas.width = 640; canvas.height = 480;
   Object.assign(canvas.style, { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", transform: "scaleX(-1)" });
   wrap.appendChild(video); wrap.appendChild(canvas);
-  document.body.appendChild(wrap);
+  const slot = document.getElementById("camera-preview-slot");
+  if (slot) {
+    window.removeEventListener("resize", updatePreviewLayout);
+    window.removeEventListener("orientationchange", updatePreviewLayout);
+    wrap.style.cssText = "position:relative;width:100%;height:100%;overflow:hidden;border-radius:12px;background:#000";
+    slot.appendChild(wrap);
+  } else document.body.appendChild(wrap);
   state.video = video; state.canvas = canvas; state.ctx = canvas.getContext("2d");
 }
 
@@ -92,15 +100,19 @@ function drawSkeleton(landmarks) {
 async function ensureStarted() {
   if (state.status !== "idle") return;
   state.status = "loading";
+  const attempt = ++generation;
   try {
     mountPreview();
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: 640, height: 480 }, audio: false,
     });
+    if (attempt !== generation) { stream.getTracks().forEach(t => t.stop()); return; }
+    state.stream = stream;
     state.video.srcObject = stream;
     await state.video.play();
 
     const filesetResolver = await FilesetResolver.forVisionTasks(WASM_URL);
+    if (attempt !== generation) return;
     let landmarker;
     try {
       landmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
@@ -113,18 +125,20 @@ async function ensureStarted() {
         runningMode: "VIDEO", numPoses: 1,
       });
     }
+    if (attempt !== generation) { landmarker.close(); return; }
     state.landmarker = landmarker;
     state.status = "ready";
-    requestAnimationFrame(detectLoop);
+    requestAnimationFrame(() => detectLoop(attempt));
   } catch (err) {
+    if (attempt !== generation) return;
     state.status = "error";
     state.error = err;
     console.error("[vision] failed to start camera/model:", err);
   }
 }
 
-function detectLoop() {
-  if (state.status !== "ready") return;
+function detectLoop(attempt) {
+  if (state.status !== "ready" || attempt !== generation) return;
   const { landmarker, video } = state;
   if (video.readyState >= 2) {
     const now = performance.now();
@@ -135,7 +149,7 @@ function detectLoop() {
       drawSkeleton(state.latestLandmarks);
     }
   }
-  requestAnimationFrame(detectLoop);
+  requestAnimationFrame(() => detectLoop(attempt));
 }
 
 const shoulderWidth = (lm) => dist(lm[IDX.LEFT_SHOULDER], lm[IDX.RIGHT_SHOULDER]);
@@ -252,14 +266,24 @@ function pushHistory(target, confidence) {
 export function checkPose(target) {
   ensureStarted();
   if (state.status !== "ready" || !state.latestLandmarks) {
-    return { matched: false, confidence: 0 };
+    history.delete(target);
+    return { matched: false, confidence: 0, tracking: false };
   }
-  const rawConfidence = scoreFor(target, state.latestLandmarks);
+  const lm = state.latestLandmarks;
+  const wrists = target === POSES.RIGHT_HAND_UP ? [IDX.RIGHT_WRIST]
+    : target === POSES.LEFT_HAND_UP ? [IDX.LEFT_WRIST]
+    : [IDX.LEFT_WRIST, IDX.RIGHT_WRIST];
+  const required = [IDX.LEFT_SHOULDER, IDX.RIGHT_SHOULDER, ...wrists];
+  if (target === POSES.TOUCH_HEAD || target === POSES.TOUCH_NOSE) required.push(IDX.NOSE);
+  const tracking = performance.now() - state.lastTimestamp < 500
+    && required.every(i => isVisible(lm[i])) && shoulderWidth(lm) > 0.03;
+  if (!tracking) { history.delete(target); return { matched: false, confidence: 0, tracking: false }; }
+  const rawConfidence = scoreFor(target, lm);
   const window = pushHistory(target, rawConfidence);
   const smoothed = window.reduce((s, e) => s + e.confidence, 0) / window.length;
   const spanMs = window.length > 1 ? window[window.length - 1].t - window[0].t : 0;
   const matched = smoothed >= MATCH_THRESHOLD && spanMs >= HOLD_WINDOW_MS * 0.6;
-  return { matched, confidence: smoothed };
+  return { matched, confidence: smoothed, tracking: true };
 }
 
 export function getVisionStatus() {
@@ -271,4 +295,18 @@ export function getAllScoresDebug() {
   const out = {};
   for (const name of Object.values(POSES)) out[name] = scoreFor(name, state.latestLandmarks);
   return out;
+}
+export function resetPoseHistory() { history.clear(); }
+
+export function stopVision() {
+  generation++;
+  state.status = "idle";
+  state.stream?.getTracks().forEach(track => track.stop());
+  state.landmarker?.close();
+  state.wrap?.remove();
+  window.removeEventListener("resize", state.layout);
+  window.removeEventListener("orientationchange", state.layout);
+  Object.assign(state, { stream: null, landmarker: null, video: null, canvas: null,
+    ctx: null, wrap: null, layout: null, latestLandmarks: null, lastTimestamp: -1, error: null });
+  history.clear();
 }

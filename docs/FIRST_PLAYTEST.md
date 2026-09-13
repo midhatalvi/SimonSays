@@ -3,7 +3,6 @@
 > Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
 
 [Home](../README.md) · [Developer guide](development.md) · [Project story](project-story.md)
-
 Status: READY TO RUN — no participant results collected.
 
 ## This laptop

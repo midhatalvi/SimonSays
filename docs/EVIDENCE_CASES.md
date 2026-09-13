@@ -3,7 +3,6 @@
 > Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
 
 [Home](../README.md) · [Developer guide](development.md)
-
 ## Evidence already available
 
 Source: repository reviewed at baseline `c4dfe4f2a4d5891c5f21d8acb75409b4f52c15ce`. Confirm the actual checkout base with git history if applying this patch elsewhere.
