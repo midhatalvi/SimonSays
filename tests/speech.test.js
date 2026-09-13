@@ -70,3 +70,13 @@ test('aborting while audio plays ends promptly', async () => {
     assert.equal(state.paused, 1); assert.deepEqual(state.spoken, []);
   });
 });
+test('speech completion has a deadline even when playback never ends', async () => {
+  await withAudioEnvironment('stalled-playback', async ({ say }, state) => {
+    globalThis.Audio = class {
+      play() { return Promise.resolve(); }
+      pause() { state.paused++; }
+    };
+    await say('stuck audio', { maxDurationMs: 20 });
+    assert.equal(state.paused, 1);
+  });
+});

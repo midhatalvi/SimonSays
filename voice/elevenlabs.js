@@ -1,5 +1,5 @@
 // Bounded cache deduplicates in-flight requests. Failed requests can be retried.
-export function createSpeechCache(fetcher = fetch, timeoutMs = 5000) {
+export function createSpeechCache(fetcher = fetch, timeoutMs = 1800) {
   const cache = new Map();
   return function prepare(text) {
     if (cache.has(text)) return cache.get(text);
@@ -20,7 +20,23 @@ export function createSpeechCache(fetcher = fetch, timeoutMs = 5000) {
 export const prepareSpeech = createSpeechCache();
 let stopCurrent = () => {};
 export function cancelSpeech() { stopCurrent(); }
-export async function say(text, { signal } = {}) {
+export async function say(text, { signal, maxDurationMs = 8000 } = {}) {
+  if (signal?.aborted) return;
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  const timer = setTimeout(abort, maxDurationMs);
+  try {
+    await Promise.race([
+      speakLine(text, { signal: controller.signal }),
+      new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true })),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+  }
+}
+async function speakLine(text, { signal } = {}) {
   if (signal?.aborted) return;
   const blob = await prepareSpeech(text);
   if (signal?.aborted) return;

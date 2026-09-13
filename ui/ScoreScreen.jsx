@@ -1,6 +1,6 @@
 // /ui — Score screen with spoken recap + reaction-time metrics. (MIDHAT)
 import React, { useEffect } from "react";
-import Robot from "./Robot.jsx";
+import { SimonArt } from "./Brand.jsx";
 import { say } from "../voice/elevenlabs.js";
 
 function warmNote(score, total) {
@@ -17,6 +17,7 @@ export default function ScoreScreen({
   total,
   eliminated,
   roundsPlayed,
+  lives = null,
   reactions = [],
   onPlayAgain,
   speak = say,
@@ -29,38 +30,66 @@ export default function ScoreScreen({
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      const base = total ? `You got ${score} out of ${total} scored rounds.`
+      const base = total
+        ? `You got ${score} out of ${total} scored rounds.`
         : "Session complete. No rounds were scored this time.";
-      speak(`${base} ${unscored} rounds were skipped or not scored. Thanks for playing.`, { signal: controller.signal });
+      speak(
+        `${eliminated ? 'That’s all three lives. Great playing! ' : ''}${base} ${unscored} rounds were skipped or not scored. Thanks for playing.`,
+        { signal: controller.signal },
+      );
     }, 0);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [score, total, unscored, speak]);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [score, total, unscored, eliminated, speak]);
 
   return (
-    <div className="screen">
-      <Robot expression="cheer">
-        <h1 className="belly-title">{eliminated ? "Good game!" : "All done!"}</h1>
-        <div className="big-num">
-          {total ? `${score}/${total}` : "Session complete"}
+    <main className="recap-screen">
+      <div className="recap-art">
+        <SimonArt expression="cheer" />
+      </div>
+      <div className="recap-copy">
+        <p className="eyebrow">A LITTLE MOVEMENT, WELL SPENT</p>
+        <h1>
+          {eliminated ? 'That’s all three lives!' : 'All done!'}
+        </h1>
+        <p>
+          {total
+            ? warmNote(score, total)
+            : "You made a little time for yourself. Try again whenever you feel ready."}
+        </p>
+        <div className="result-stat">
+          <span className="big-num">
+            {total ? `${score}/${total}` : "—"}
+          </span>
+          <p>
+            {total ? "Movement rounds completed correctly" : "No rounds scored this time"}
+          </p>
         </div>
-        <p>Movement rounds</p>
-        {discovery && <p>Discovery: {discovery.correct} correct from {discovery.answered} answered questions. This does not change your movement score.</p>}
-        <p>{unscored} rounds skipped or not scored. Camera interruptions never count against you.</p>
+        {lives != null && <p>{roundsPlayed} of 6 rounds played · {lives} {lives === 1 ? 'life' : 'lives'} left</p>}
+        {discovery && (
+          <p>
+            Discovery: {discovery.correct} correct from {discovery.answered}{" "}
+            answered questions. This does not change your movement score.
+          </p>
+        )}
+        <p className="score-note">
+          {unscored} rounds skipped or not scored. Camera interruptions never
+          count against you.
+        </p>
         {avgSec != null && (
           <div className="metrics">
-            <span className="metric">⏱ Avg {avgSec.toFixed(1)}s</span>
-            <span className="metric">⚡ Best {bestSec.toFixed(1)}s</span>
+            <span className="metric">
+              Average response: {avgSec.toFixed(1)}s
+            </span>
+            <span className="metric">Best: {bestSec.toFixed(1)}s</span>
           </div>
         )}
-        <p className="belly-text">
-          {eliminated
-            ? `You stayed sharp for ${roundsPlayed} rounds!`
-            : total ? warmNote(score, total) : "Try again whenever you feel ready."}
-        </p>
         <button className="big-btn" onClick={onPlayAgain}>
-          Play again
+          Play again <span aria-hidden="true">↗</span>
         </button>
-      </Robot>
-    </div>
+      </div>
+    </main>
   );
 }

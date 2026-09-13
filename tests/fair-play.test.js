@@ -10,6 +10,38 @@ function run(poseAt, overrides = {}) {
   });
 }
 const neutral = { tracking: true, matched: false, confidence: 0 };
+test('physical hands-down readiness overrides an ambiguous target score', async () => {
+  let announced = false;
+  const result = await run(() => announced
+    ? { tracking: true, ready: false, matched: true, confidence: 1 }
+    : { tracking: true, ready: true, matched: false, confidence: 0.3 }, {
+    round: { simonSays: true }, options: { onReady: () => { announced = true; } },
+  });
+  assert.equal(result.passed, true);
+});
+test('ambiguous visible posture cannot stall readiness indefinitely', async () => {
+  const result = await run(() => ({ tracking: true, matched: false, confidence: 0.3 }), {
+    options: { maxTrackingWaitMs: 1000 },
+  });
+  assert.equal(result.passed, null);
+  assert.equal(result.reason, 'readiness-timeout');
+});
+test('intermittent tracking does not restart the readiness deadline', async () => {
+  const result = await run(t => Math.floor(t / 100) % 2 ? neutral : { tracking: false }, {
+    options: { maxTrackingWaitMs: 1000 },
+  });
+  assert.equal(result.passed, null);
+  assert.ok(['readiness-timeout', 'tracking-timeout'].includes(result.reason));
+});
+test('instruction is delivered after readiness so immediate compliance scores', async () => {
+  let revealed = false;
+  const result = await run(() => revealed
+    ? { tracking: true, matched: true, confidence: 1 } : neutral, {
+    round: { simonSays: true }, options: { onReady: async () => { revealed = true; } },
+  });
+  assert.equal(revealed, true);
+  assert.equal(result.passed, true);
+});
 test('missing tracking cannot pass a trick round', async () => {
   const result = await run(() => ({ matched: false, confidence: 0 }), { options: { maxTrackingWaitMs: 500 } });
   assert.equal(result.passed, null); assert.equal(result.reason, 'tracking-timeout');
