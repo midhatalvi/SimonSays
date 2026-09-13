@@ -198,14 +198,6 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     onSkip={() => finishDiscovery()} onContinue={item => {
       discovered.current = item; setSessionDiscovery(item); finishDiscovery();
     }} />;
-  if (discovery === 'startfact') return <main className="screen learn-screen">
-    <div className="discovery-modal-backdrop"><div className="discovery-modal" role="dialog" aria-live="polite">
-      <p className="modal-verdict">A little discovery</p>
-      <blockquote>{startFact?.fact}</blockquote>
-      {startFact && <DiscoverySource item={startFact} movement={startFact.movement} />}
-      <p className="auto-advance-note">Starting in a few seconds…</p>
-    </div></div>
-  </main>;
   if (discovery === 'recall') return <LearnScreen settings={settings} runtime={runtime} discoveryItem={sessionDiscovery}
     onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
   if (error) return <div className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">LET’S GET YOU CONNECTED</p><h1>Camera setup needs another try</h1>
@@ -213,13 +205,19 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     <button className="big-btn" onClick={() => setAttempt(value => value + 1)}>Try again</button>
     {onExit && <button onClick={onExit}>Back to setup</button>}</div>;
   return <main className="session-layout">
+    {discovery === 'startfact' && <div className="discovery-modal-backdrop"><div className="discovery-modal" role="dialog" aria-live="polite">
+      <p className="modal-verdict">A little discovery</p>
+      <blockquote>{startFact?.fact}</blockquote>
+      {startFact && <DiscoverySource item={startFact} movement={startFact.movement} />}
+      <p className="auto-advance-note">Starting in a few seconds…</p>
+    </div></div>}
     <aside className="camera-panel"><div className="camera-panel-heading"><strong>Your camera</strong><span>{cameraReady ? "Connected" : "Connecting…"}</span></div><div className="camera-window"><div className="camera-placeholder">Camera preview</div><div id="camera-preview-slot" aria-label="Live camera preview" /></div><p>Head, shoulders, and hands in view.</p><details className="quiet-help"><summary>Rules & privacy</summary><p>“Simon says…” — move. Otherwise, stay still. A slip costs one life.</p><p>Camera frames stay on your device. No microphone needed.</p></details></aside><div className="screen fair-game">
     <p className="round-label">{!cameraReady ? 'Camera setup' : roundNumber === 0 ? 'How to play' : `Round ${roundNumber} of 6`}</p>
     {cameraReady && <p className="lives-display" role="status" aria-label={`${lives} lives left`}><span aria-hidden="true">{'♥'.repeat(lives)}{'♡'.repeat(STARTING_LIVES - lives)}</span> <span>{lives} {lives === 1 ? 'life' : 'lives'} left</span></p>}
     <SimonCharacter expression={expression} />
     <h1 className="instruction">{prompt}</h1>
     <p role="status" aria-live="polite">{status}</p>
-    {sessionDiscovery && <><p>{roundNumber === 3 ? sessionDiscovery.movement.cue : ''}</p><DiscoverySource item={sessionDiscovery} movement={sessionDiscovery.movement} explain /></>}
+    {sessionDiscovery && <><p>{roundNumber === 3 ? (sessionDiscovery.movement?.cue || '') : ''}</p><DiscoverySource item={sessionDiscovery} movement={sessionDiscovery.movement} explain /></>}
     {countdown != null && <p aria-label="Seconds remaining">{countdown}s remaining</p>}
     <div className="play-controls" aria-label="Session controls">
       <button disabled={!canControl || repeatBusy} onClick={() => {
