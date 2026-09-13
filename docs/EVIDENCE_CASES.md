@@ -89,3 +89,12 @@ These are executed synthetic UI cases, not participant evidence or live sponsor 
 - Existing 25 automated cases pass, including tracking fairness, source validation, ambiguous gestures, and speech cancellation. Production build passes.
 
 Pending real-use validation: camera release/restart on actual hardware; two comfortable gesture mappings with older adults; comprehension of the switch from Simon says rules to A/B questions; pause/repeat discoverability; authenticated live Tavily/ElevenLabs verification. The 16-second client timeout is implemented but was not timed in the browser check. No cognitive benefit, retention, or accessibility-compliance result is established.
+
+## Tavily efficiency and usability checks — 2026-09-13
+
+- Controlled API responses verified one search for a supported first result (previously two), at most two attempts when fallback is needed, one shared 12-second deadline, allowed source domains, and no upstream calls for invalid requests. This is a measured request-count reduction in the fixture, not measured production latency or billing.
+- Fallback now runs sequentially; when needed it can take longer than the former parallel approach, but cannot extend the shared deadline. No cross-session cache was added. Live content and retrieval dates remain honest.
+- Network failures, malformed JSON, unsupported evidence, empty client results, and client cancellation are covered by automated tests. Client cancellation does not guarantee cancellation of an already-running server-side Tavily request; that work remains bounded by the server deadline.
+- Browser checks with synthetic input verified Repeat disables answers, Resume restores them, Skip gives no answer credit, and an incorrect answer reveals a supportive explanation. Fixed the repeated-question status so it explicitly says “Paused. Select Resume when you are ready to answer.” Rechecked the corrected message.
+- 31 automated tests and the production build pass. Earlier integrated-session success and failure examples remain documented above.
+- No callable Tavily plugin tools or local Tavily API key were available. Live API latency, real billing, real gesture usability, and older-adult comprehension remain unverified. This is a functional usability check, not a participant study.

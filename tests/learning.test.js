@@ -52,3 +52,55 @@ test('API serves supported questions despite partial upstream failure', async ()
     assert.equal(res.code,200); assert.equal(res.body.questions.length,1); assert.equal(res.body.questions[0].id,'jupiter');
   } finally { globalThis.fetch=oldFetch; if(key===undefined)delete process.env.TAVILY_API_KEY;else process.env.TAVILY_API_KEY=key; }
 });
+
+async function withSearch(fake, run) {
+  const key = process.env.TAVILY_API_KEY, original = globalThis.fetch;
+  process.env.TAVILY_API_KEY = 'synthetic-test-key'; globalThis.fetch = fake;
+  try { await run(); } finally {
+    globalThis.fetch = original;
+    if (key === undefined) delete process.env.TAVILY_API_KEY; else process.env.TAVILY_API_KEY = key;
+  }
+}
+test('one supported question consumes one search, not two', async () => {
+  const requests = [];
+  await withSearch(async (url, options) => {
+    requests.push({ url, ...JSON.parse(options.body) });
+    return { ok:true, json:async () => ({ results:[source] }) };
+  }, async () => {
+    const res = response(); await handler({method:'POST',body:{topic:'space'}},res);
+    assert.equal(res.code,200); assert.equal(res.body.questions.length,1);
+    assert.equal(requests.length,1); assert.equal(requests[0].include_answer,false);
+    assert.deepEqual(requests[0].include_domains,['nasa.gov']);
+    assert.equal(requests[0].max_results,3);
+  });
+});
+test('unsupported first result falls back with the same deadline', async () => {
+  const signals = [];
+  await withSearch(async (url, options) => {
+    signals.push(options.signal);
+    return {ok:true,json:async()=>({results: signals.length === 1 ? [{...source,content:'No supporting fact.'}] : [
+      {title:'Venus',url:'https://science.nasa.gov/venus/',content:'Venus is the hottest planet in our solar system.'}
+    ]})};
+  }, async () => {
+    const res=response(); await handler({method:'POST',body:{topic:'space'}},res);
+    assert.equal(res.code,200); assert.equal(res.body.questions[0].id,'venus');
+    assert.equal(signals.length,2); assert.equal(signals[0],signals[1]);
+  });
+});
+test('malformed and unavailable search results return recoverable error without invented facts', async () => {
+  let calls=0;
+  await withSearch(async () => { calls++; if(calls===1) throw Error('network unavailable');
+    return {ok:true,json:async()=>{throw Error('invalid JSON');}};
+  }, async () => {
+    const res=response(); await handler({method:'POST',body:{topic:'animals'}},res);
+    assert.equal(res.code,503); assert.equal(res.body.questions,undefined); assert.equal(calls,2);
+    assert.match(res.body.error,/Return to movement/);
+  });
+});
+test('invalid requests perform no upstream searches', async () => {
+  await withSearch(async () => { assert.fail('Unexpected search'); }, async () => {
+    for (const req of [{method:'GET'},{method:'POST',body:{topic:'__proto__'}}]) {
+      const res=response(); await handler(req,res); assert.ok([400,405].includes(res.code));
+    }
+  });
+});

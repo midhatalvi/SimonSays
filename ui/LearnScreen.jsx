@@ -67,9 +67,9 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
     turn.current?.accept?.(null); turn.current?.abort(); runtime.cancelSpeech();
   }
   async function repeat() {
-    pause.current = true; setPaused(true); setRepeatBusy(true);
+    pause.current = true; setPaused(true); setRepeatBusy(true); setStatus('Repeating the question. Answers are paused.');
     await runtime.say(line.current, { signal: turn.current?.signal });
-    if (!turn.current?.signal.aborted) setRepeatBusy(false);
+    if (!turn.current?.signal.aborted) { setRepeatBusy(false); setStatus('Paused. Select Resume when you are ready to answer.'); }
   }
   return <main className="screen setup-screen learn-screen">
     <h1>Discovery break</h1>

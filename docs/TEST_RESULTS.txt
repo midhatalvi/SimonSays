@@ -6,162 +6,198 @@ TAP version 13
 # Subtest: missing tracking cannot pass a trick round
 ok 1 - missing tracking cannot pass a trick round
   ---
-  duration_ms: 0.542334
+  duration_ms: 0.548625
   type: 'test'
   ...
 # Subtest: loss of tracking cannot fail a movement round
 ok 2 - loss of tracking cannot fail a movement round
   ---
-  duration_ms: 0.13075
+  duration_ms: 0.145667
   type: 'test'
   ...
 # Subtest: held-over pose must return to neutral before it can score
 ok 3 - held-over pose must return to neutral before it can score
   ---
-  duration_ms: 0.145583
+  duration_ms: 0.112958
   type: 'test'
   ...
 # Subtest: visible still player passes full trick window
 ok 4 - visible still player passes full trick window
   ---
-  duration_ms: 0.068459
+  duration_ms: 0.067875
   type: 'test'
   ...
 # Subtest: moving on trick fails after neutral readiness
 ok 5 - moving on trick fails after neutral readiness
   ---
-  duration_ms: 0.12425
+  duration_ms: 0.118917
   type: 'test'
   ...
 # Subtest: tracking recovery requires neutral and excludes timing metric
 ok 6 - tracking recovery requires neutral and excludes timing metric
   ---
-  duration_ms: 0.065625
+  duration_ms: 0.061875
   type: 'test'
   ...
 # Subtest: pause consumes no response-window time
 ok 7 - pause consumes no response-window time
   ---
-  duration_ms: 0.157875
+  duration_ms: 0.157458
   type: 'test'
   ...
 # Subtest: abort ends round without score
 ok 8 - abort ends round without score
   ---
-  duration_ms: 0.10075
+  duration_ms: 0.095375
   type: 'test'
   ...
 # Subtest: mid-round tracking loss does not consume the remaining trick window
 ok 9 - mid-round tracking loss does not consume the remaining trick window
   ---
-  duration_ms: 0.234458
+  duration_ms: 0.229833
   type: 'test'
   ...
 # Subtest: a held pose never scores without a neutral transition
 ok 10 - a held pose never scores without a neutral transition
   ---
-  duration_ms: 0.733666
+  duration_ms: 0.735958
   type: 'test'
   ...
 # Subtest: question requires supporting evidence from an allowed HTTPS source
 ok 11 - question requires supporting evidence from an allowed HTTPS source
   ---
-  duration_ms: 1.122459
+  duration_ms: 1.400958
   type: 'test'
   ...
 # Subtest: shuffling preserves correct answer and source
 ok 12 - shuffling preserves correct answer and source
   ---
-  duration_ms: 0.176583
+  duration_ms: 0.133958
   type: 'test'
   ...
 # Subtest: exclusive gesture selects the mapped answer
 ok 13 - exclusive gesture selects the mapped answer
   ---
-  duration_ms: 0.213833
+  duration_ms: 0.163291
   type: 'test'
   ...
 # Subtest: ambiguous two-gesture match is not accepted
 ok 14 - ambiguous two-gesture match is not accepted
   ---
-  duration_ms: 0.149959
+  duration_ms: 0.146292
   type: 'test'
   ...
 # Subtest: missing tracking never selects an answer
 ok 15 - missing tracking never selects an answer
   ---
-  duration_ms: 0.070375
+  duration_ms: 0.06175
   type: 'test'
   ...
 # Subtest: held pose requires neutral before answering
 ok 16 - held pose requires neutral before answering
   ---
-  duration_ms: 0.067333
+  duration_ms: 0.069
   type: 'test'
   ...
 # Subtest: API rejects unknown topics and missing configuration
 ok 17 - API rejects unknown topics and missing configuration
   ---
-  duration_ms: 0.18525
+  duration_ms: 0.17475
   type: 'test'
   ...
 # Subtest: API serves supported questions despite partial upstream failure
 ok 18 - API serves supported questions despite partial upstream failure
   ---
-  duration_ms: 0.251542
+  duration_ms: 0.179709
+  type: 'test'
+  ...
+# Subtest: one supported question consumes one search, not two
+ok 19 - one supported question consumes one search, not two
+  ---
+  duration_ms: 0.569542
+  type: 'test'
+  ...
+# Subtest: unsupported first result falls back with the same deadline
+ok 20 - unsupported first result falls back with the same deadline
+  ---
+  duration_ms: 0.335792
+  type: 'test'
+  ...
+# Subtest: malformed and unavailable search results return recoverable error without invented facts
+ok 21 - malformed and unavailable search results return recoverable error without invented facts
+  ---
+  duration_ms: 0.606833
+  type: 'test'
+  ...
+# Subtest: invalid requests perform no upstream searches
+ok 22 - invalid requests perform no upstream searches
+  ---
+  duration_ms: 0.10775
   type: 'test'
   ...
 # Subtest: preloading and playback share one request
-ok 19 - preloading and playback share one request
+ok 23 - preloading and playback share one request
   ---
-  duration_ms: 0.581458
+  duration_ms: 0.878958
   type: 'test'
   ...
 # Subtest: temporary speech failure is retryable
-ok 20 - temporary speech failure is retryable
+ok 24 - temporary speech failure is retryable
   ---
-  duration_ms: 0.552916
+  duration_ms: 0.579417
   type: 'test'
   ...
 # Subtest: speech request timeout releases caller for fallback
-ok 21 - speech request timeout releases caller for fallback
+ok 25 - speech request timeout releases caller for fallback
   ---
-  duration_ms: 11.862166
+  duration_ms: 10.234416
   type: 'test'
   ...
 # Subtest: successful prepared audio completes and releases player
-ok 22 - successful prepared audio completes and releases player
+ok 26 - successful prepared audio completes and releases player
   ---
-  duration_ms: 1.629
+  duration_ms: 1.580792
   type: 'test'
   ...
 # Subtest: audio playback rejection falls back to browser speech
-ok 23 - audio playback rejection falls back to browser speech
+ok 27 - audio playback rejection falls back to browser speech
   ---
-  duration_ms: 0.886667
+  duration_ms: 0.862791
   type: 'test'
   ...
 # Subtest: already cancelled speech makes no network or playback request
-ok 24 - already cancelled speech makes no network or playback request
+ok 28 - already cancelled speech makes no network or playback request
   ---
-  duration_ms: 0.723583
+  duration_ms: 0.613166
   type: 'test'
   ...
 # Subtest: aborting while audio plays ends promptly
-ok 25 - aborting while audio plays ends promptly
+ok 29 - aborting while audio plays ends promptly
   ---
-  duration_ms: 0.96325
+  duration_ms: 0.78725
   type: 'test'
   ...
-1..25
-# tests 25
+# Subtest: client forwards cancellation without retrying the request
+ok 30 - client forwards cancellation without retrying the request
+  ---
+  duration_ms: 0.761375
+  type: 'test'
+  ...
+# Subtest: client surfaces unavailable search and rejects empty or non-JSON responses
+ok 31 - client surfaces unavailable search and rejects empty or non-JSON responses
+  ---
+  duration_ms: 0.293791
+  type: 'test'
+  ...
+1..31
+# tests 31
 # suites 0
-# pass 25
+# pass 31
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 50.996291
+# duration_ms 48.678709
 
 > simonsays@0.0.1 build
 > vite build
@@ -173,5 +209,5 @@ rendering chunks...
 computing gzip size...
 dist/index.html                   0.80 kB │ gzip:  0.43 kB
 dist/assets/index-BcQ7zHse.css   11.31 kB │ gzip:  3.20 kB
-dist/assets/index-CtBFEz5o.js   300.08 kB │ gzip: 95.32 kB
-✓ built in 411ms
+dist/assets/index-BPRwEGKz.js   300.19 kB │ gzip: 95.35 kB
+✓ built in 413ms
