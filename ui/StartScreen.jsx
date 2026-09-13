@@ -1,25 +1,13 @@
 import React, { useState, useRef } from "react";
 import { ACTIVE_POSES } from "../engine/gameEngine.js";
-import { BrandHeader, SimonArt, MoveIcon } from "./Brand.jsx";
-const names = {
-  RIGHT_HAND_UP: "Right hand up",
-  LEFT_HAND_UP: "Left hand up",
-  TOUCH_HEAD: "Touch head",
-  TOUCH_NOSE: "Touch nose",
-  TOUCH_SHOULDERS: "Touch shoulders",
-  ARMS_OUT: "Arms out wide",
-};
+import { BrandHeader, SimonArt } from "./Brand.jsx";
 export default function StartScreen({ onStart }) {
   const [setup, setSetup] = useState(false);
   const [discovery, setDiscovery] = useState(true);
   const [topic, setTopic] = useState("space");
   const [answerMode, setAnswerMode] = useState("gestures");
   const [seconds, setSeconds] = useState(8);
-  const [poses, setPoses] = useState([
-    "RIGHT_HAND_UP",
-    "LEFT_HAND_UP",
-    "TOUCH_NOSE",
-  ]);
+  const poses = ACTIVE_POSES; // all movements are always in play
   const titleRef = useRef(null);
   function navigate(value) {
     setSetup(value);
@@ -118,7 +106,7 @@ export default function StartScreen({ onStart }) {
           <section className="why-simon" aria-labelledby="why-simon-title">
             <div className="why-heading"><p className="eyebrow">WHY SIMON SAYS?</p><h2 id="why-simon-title">Made to fit <em>you.</em></h2></div>
             <div className="why-benefits">
-              <article><h3>Move comfortably.</h3><p>Choose your movements and pace.</p></article>
+              <article><h3>Move comfortably.</h3><p>Gentle movements, at your own pace.</p></article>
               <article><h3>Follow along.</h3><p>Clear words. A friendly voice.</p></article>
               <article><h3>Just you and a camera.</h3><p>No controller or wearable needed.</p></article>
               <article><h3>Stay curious.</h3><p>One discovery, woven through the game.</p></article>
@@ -158,42 +146,9 @@ export default function StartScreen({ onStart }) {
             <details className="quiet-help"><summary>Camera & privacy</summary><p>Movement is processed on this device. Voice uses an online service. No microphone needed.</p><p>The session ends after 10 seconds without reliable tracking or readiness.</p></details>
           </div>
           <div className="setup-form">
-            <fieldset className="movement-field">
-              <legend>
-                <span className="number-label">01</span> Your movements
-              </legend>
-              <p className="field-help">
-                Choose one or more.
-              </p>
-              <div className="movement-grid">
-                {ACTIVE_POSES.map((pose) => (
-                  <label
-                    className={
-                      "movement-option " +
-                      (poses.includes(pose) ? "selected" : "")
-                    }
-                    key={pose}
-                  >
-                    <MoveIcon pose={pose} />
-                    <span>{names[pose]}</span>
-                    <input
-                      type="checkbox"
-                      checked={poses.includes(pose)}
-                      onChange={() =>
-                        setPoses((current) =>
-                          current.includes(pose)
-                            ? current.filter((p) => p !== pose)
-                            : [...current, pose],
-                        )
-                      }
-                    />
-                  </label>
-                ))}
-              </div>
-            </fieldset>
             <fieldset>
               <legend>
-                <span className="number-label">02</span> Your pace
+                <span className="number-label">01</span> Your pace
               </legend>
               <div className="pace-options">
                 {[
@@ -258,7 +213,7 @@ export default function StartScreen({ onStart }) {
                   <details><summary>About discovery</summary><p>
                     No time limit. Your topic goes to Tavily only if you accept.
                     {answerMode === "gestures"
-                      ? " Your first two selected moves answer A and B; with one move, you’ll use buttons."
+                      ? " Your first two moves answer A and B."
                       : ""}
                   </p></details>
                 </div>
@@ -267,24 +222,12 @@ export default function StartScreen({ onStart }) {
             <div className="setup-action">
               <button
                 className="big-btn"
-                disabled={!poses.length}
                 onClick={() =>
-                  onStart({
-                    seconds,
-                    poses,
-                    discovery,
-                    topic,
-                    answerMode: poses.length < 2 ? "buttons" : answerMode,
-                  })
+                  onStart({ seconds, poses, discovery, topic, answerMode })
                 }
               >
                 Play with Simon <span aria-hidden="true">↗</span>
               </button>
-              {!poses.length && (
-                <p role="status">
-                  Choose at least one comfortable movement to begin.
-                </p>
-              )}
               <small>Camera permission comes next.</small>
             </div>
           </div>
