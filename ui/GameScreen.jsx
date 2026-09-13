@@ -10,8 +10,8 @@ import { STARTING_LIVES, summarizeSession } from '../engine/sessionScore.js';
 const liveRuntime = { getLearningQuestions, checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const labels = {
-  neutral: 'Relax your hands below your shoulders. Keep them in view.',
-  active: 'Go: follow the instruction only if Simon says.',
+  neutral: 'Lower your hands. Keep them in view.',
+  active: 'Go — only if Simon says.',
   'tracking-lost': 'Move into view so Simon can see the selected movement. The session ends after 10 seconds without detection.',
   paused: 'Paused. Take your time.',
 };
@@ -90,11 +90,11 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
         const result = await judgeRound(round, checkPose, setCountdown, {
           maxTrackingWaitMs: 10000, signal: roundController.signal, isPaused: () => pausedRef.current,
           reset: resetPoseHistory, onState: state => setStatus(state === 'tracking-lost'
-            ? `${getVisionStatus().trackingHint || labels[state]} The session ends after 10 seconds without reliable tracking.`
+            ? `${getVisionStatus().trackingHint || 'Move into view.'} 10 seconds to reconnect.`
             : labels[state]),
           onReady: async () => {
             setPrompt(round.promptText);
-            setStatus('Listen to Simon. You can follow the instruction now.');
+            setStatus('Listen, then move.');
             instructionSpeech = say(command.current, { signal: roundController.signal });
             await instructionSpeech;
           },
@@ -161,8 +161,7 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
   if (detectionEnded) return <main className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">SESSION ENDED · CAMERA OFF</p><h1>{detectionEnded === 'readiness-timeout' ? 'Let’s adjust your starting position' : 'Simon couldn’t keep you in view'}</h1><p>{detectionEnded === 'readiness-timeout' ? 'Simon could not confirm a relaxed starting position within 10 seconds. Lower your hands below your shoulders, keeping them in the camera frame.' : 'The camera could not reliably see the body points needed for your movement within 10 seconds. Check that your head, shoulders, and hands fit in the frame.'}</p><p>Your camera is now off. Try again or choose a different movement.</p>{onExit && <button className="big-btn" onClick={onExit}>Back to setup</button>}</main>;
   if (discovery === 'offer') return <main className="screen discovery-offer"><p className="eyebrow">HALFWAY THROUGH · YOUR CHOICE</p><SimonCharacter />
     <h1>Ready for a discovery break?</h1>
-    <p>You’ve finished three movement rounds. Explore one {settings.topic} question, or keep moving.</p>
-    <p>Question answers are separate from your movement score.</p>
+    <p>One {settings.topic} question. Your movement score stays separate.</p>
     <button className="big-btn" onClick={() => setDiscovery('question')}>Explore one fact</button>
     <button onClick={() => finishDiscovery()}>Keep moving</button>
     {onExit && <button onClick={onExit}>End session</button>}
@@ -174,9 +173,9 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     <button className="big-btn" onClick={() => setAttempt(value => value + 1)}>Try again</button>
     {onExit && <button onClick={onExit}>Back to setup</button>}</div>;
   return <main className="session-layout">
-    <aside className="camera-panel"><div className="camera-panel-heading"><strong>You & Simon</strong><span>{cameraReady ? "Camera connected" : "Connecting camera"}</span></div><div className="camera-window"><div className="camera-placeholder">Your camera view will appear here.</div><div id="camera-preview-slot" aria-label="Live camera preview" /></div><p>Keep your head, shoulders, and hands in view. Sit or stand comfortably.</p><span className="camera-privacy">Camera frames stay on this device. No microphone needed.</span><div className="rule-reminder"><h2>A little reminder</h2><p><strong>“Simon says…”</strong> Do the move.</p><p><strong>No “Simon says”?</strong> Stay still.</p><p>Relax your hands, then wait for “Go.”</p></div></aside><div className="screen fair-game">
+    <aside className="camera-panel"><div className="camera-panel-heading"><strong>Your camera</strong><span>{cameraReady ? "Connected" : "Connecting…"}</span></div><div className="camera-window"><div className="camera-placeholder">Camera preview</div><div id="camera-preview-slot" aria-label="Live camera preview" /></div><p>Head, shoulders, and hands in view.</p><details className="quiet-help"><summary>Rules & privacy</summary><p>“Simon says…” — move. Otherwise, stay still. A slip costs one life.</p><p>Camera frames stay on your device. No microphone needed.</p></details></aside><div className="screen fair-game">
     <p className="round-label">{!cameraReady ? 'Camera setup' : roundNumber === 0 ? 'How to play' : `Round ${roundNumber} of 6`}</p>
-    {cameraReady && <p className="lives-display" role="status" aria-label={`${lives} lives left`}><span aria-hidden="true">{'♥'.repeat(lives)}{'♡'.repeat(STARTING_LIVES - lives)}</span> <span>{lives} {lives === 1 ? 'life' : 'lives'} left · A slip costs one</span></p>}
+    {cameraReady && <p className="lives-display" role="status" aria-label={`${lives} lives left`}><span aria-hidden="true">{'♥'.repeat(lives)}{'♡'.repeat(STARTING_LIVES - lives)}</span> <span>{lives} {lives === 1 ? 'life' : 'lives'} left</span></p>}
     <SimonCharacter expression={expression} />
     <h1 className="instruction">{prompt}</h1>
     <p role="status" aria-live="polite">{status}</p>
@@ -185,12 +184,11 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
       <button disabled={!canControl || repeatBusy} onClick={() => {
         pausedRef.current = !pausedRef.current; setPaused(pausedRef.current);
       }}>{paused ? 'Resume' : 'Pause'}</button>
-      <button disabled={!canControl || repeatBusy} onClick={repeat}>Repeat instruction</button>
+      <button disabled={!canControl || repeatBusy} onClick={repeat}>Repeat</button>
       <button disabled={!canControl || repeatBusy} onClick={() => {
         pausedRef.current = false; setPaused(false); skip.current = true; activeController.current?.abort();
       }}>Skip — no penalty</button>
-      {onExit && <button onClick={onExit}>End session / change movements</button>}
+      {onExit && <button onClick={onExit}>End game</button>}
     </div>
-    <p className="session-bottom-note">Small moves count. Pause or skip whenever you need.</p>
   </div></main>;
 }

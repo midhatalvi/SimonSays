@@ -72,8 +72,8 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
     if (!turn.current?.signal.aborted) { setRepeatBusy(false); setStatus('Paused. Select Resume when you are ready to answer.'); }
   }
   return <main className="screen setup-screen learn-screen">
-    <p className="eyebrow">A MOMENT TO EXPLORE · NO TIME LIMIT</p><h1>Discovery break</h1>
-    <p>This is a question round—choose A or B. No Simon says tricks here. Take your time.</p>
+    <h1>Discovery break</h1>
+    <p>Choose A or B. No tricks. No rush.</p>
     <button onClick={() => onFinish && totals.current.answered ? onFinish({ ...totals.current }) : onExit()}>{onFinish ? 'Return to movement' : 'Back to setup'}</button>
     {!buttons && questions && result === undefined && <button onClick={() => { turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); setError(''); setButtons(true); setStep(s => Math.max(2, s)); }}>Use answer buttons instead</button>}
     {error ? <p role="alert">{error}</p> : finished ? <>
@@ -94,7 +94,7 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
         <button disabled={!ready || repeatBusy} onClick={repeat}>Repeat question</button>
         <button disabled={!ready || repeatBusy} onClick={skip}>Skip — no penalty</button>
       </div> : <>
-        {!practice && <section aria-label="Answer evidence"><p>Answer: {card.answers[card.correct]}</p>
+        {!practice && <section aria-label="Answer evidence">
           <details><summary>Explore this fact</summary><blockquote>{card.source.excerpt}</blockquote>
           <a href={card.source.url} target="_blank" rel="noopener noreferrer">Read source: {card.source.title}</a>
           <p>{card.source.synthetic ? 'Synthetic example — no live retrieval' : `Retrieved through Tavily · ${new Date(card.source.retrievedAt).toLocaleDateString()}`}</p></details>

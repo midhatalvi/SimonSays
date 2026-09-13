@@ -1218,13 +1218,13 @@ select {
 }
 
 /* The same game story, with a dedicated, always-visible camera surface. */
-.session-layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:48px;max-width:1260px;margin:44px auto 52px;align-items:start}
-.camera-panel{background:#EEE8F3;border:1px solid #D9CEE1;border-radius:24px;padding:22px;text-align:left}
+.session-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;max-width:1440px;margin:32px auto 48px;align-items:start}
+.camera-panel{background:transparent;border:0;border-radius:0;padding:0;text-align:left;min-width:0}
 .camera-panel-heading{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:18px}.camera-panel-heading strong{font-size:19px}.camera-panel-heading span{font-size:11px;color:var(--ink-soft)}
-.camera-window{position:relative;aspect-ratio:4/3;background:#DED3E6;border-radius:15px;overflow:hidden}.camera-placeholder{position:absolute;inset:0;display:grid;place-items:center;padding:30px;text-align:center;font-size:15px;color:var(--ink-soft)}
-.camera-window #camera-preview-slot{display:block;position:absolute;inset:0;width:100%;height:100%;border-radius:15px}.camera-panel>p{font-size:15px;margin:17px 0 12px}.camera-privacy{display:block;font-size:12px;line-height:1.6;color:var(--ink-soft)}
+.camera-window{position:relative;aspect-ratio:4/3;background:#DED3E6;border-radius:0;overflow:hidden}.camera-placeholder{position:absolute;inset:0;display:grid;place-items:center;padding:30px;text-align:center;font-size:15px;color:var(--ink-soft)}
+.camera-window #camera-preview-slot{display:block;position:absolute;inset:0;width:100%;height:100%;border-radius:0}.camera-panel>p{font-size:15px;margin:12px 0 0;color:var(--ink-soft)}.camera-panel .quiet-help{margin:0}.camera-privacy{display:block;font-size:12px;line-height:1.6;color:var(--ink-soft)}
 .rule-reminder{margin-top:25px;padding-top:22px;border-top:1px solid #CFC1D8}.rule-reminder h2{font-size:25px;margin-bottom:16px}.rule-reminder p{font-size:14px;margin-bottom:12px}.session-layout .fair-game{min-height:620px;padding:0;max-width:100%;width:100%}.session-layout .instruction{font-size:clamp(28px,3vw,42px)!important}.session-layout .play-controls{max-width:620px}.discovery-offer{background:#F5EDC9;border-radius:30px;margin:45px auto;padding:40px;min-height:600px}.discovery-offer .simon-art{height:150px}.learn-screen{margin:40px auto;padding:35px 32px;background:#F5F0F8;border-radius:28px}.learn-screen>[role=status]{background:white;padding:20px;border-radius:15px;width:100%}.camera-error{min-height:640px}.camera-error .simon-art{height:170px}.learn-screen #camera-preview-slot{position:relative;top:auto;right:auto}
-@media(max-width:900px){.session-layout{grid-template-columns:260px minmax(0,1fr);gap:24px}.camera-panel{padding:16px}}
+@media(max-width:900px){.session-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}}
 @media(max-width:700px){.session-layout{grid-template-columns:1fr;margin:24px auto;gap:25px}.camera-panel{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;border-radius:18px}.camera-panel-heading{grid-column:1/-1;margin:0}.camera-window{grid-row:2/4}.camera-panel>p{margin:0;font-size:13px}.camera-privacy{font-size:11px}.rule-reminder{grid-column:1/-1;margin:4px 0 0;padding-top:12px}.rule-reminder h2{display:none}.rule-reminder p{font-size:12px;display:inline;margin-right:7px}.session-layout .fair-game{min-height:560px}.discovery-offer{padding:28px 20px}.learn-screen{padding:28px 16px}.setup-intro>.simon-art{display:none}}
 
 /* Clear benefits and readable landing copy for older adults. */
@@ -1232,3 +1232,13 @@ select {
 .why-simon{display:grid;grid-template-columns:.8fr 1.5fr;gap:60px;border-top:1px solid #DDD6DF;padding:48px 0}.why-heading h2{font-size:42px;line-height:1.15;letter-spacing:-1px;margin-bottom:20px}.why-heading>p:last-child{font-size:18px;color:var(--ink-soft);max-width:28ch}.why-benefits{display:grid;grid-template-columns:1fr 1fr;gap:30px 36px}.why-benefits h3{font-size:20px;line-height:1.35;margin-bottom:10px}.why-benefits p{font-size:17px;color:var(--ink-soft);margin:0}.how-section article h3{font-size:18px}.how-section article p{font-size:16px}.reassurance p{font-size:16px;max-width:70ch}.reassurance .text-button{white-space:nowrap;font-size:16px}
 @media(max-width:760px){.hero-copy h1{font-size:55px}.hero-intro{font-size:18px}.under-cta{font-size:14px}.why-simon{grid-template-columns:1fr;gap:20px;padding:32px 0}.why-heading h2{font-size:36px}.why-heading>p:last-child{max-width:none}.why-benefits{grid-template-columns:1fr;gap:25px}.why-benefits p{font-size:17px}.reassurance{align-items:flex-start}.reassurance p{font-size:15px;flex:1}.reassurance .text-button{margin-left:0}.hero-copy .eyebrow{font-size:11px;letter-spacing:1px}}
 @media(max-width:760px){.hero-stats{display:flex;grid-column:1;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:inline mandatory;padding:2px 0 14px;scrollbar-color:#9d80b2 transparent}.hero-stats>a{flex:0 0 min(78vw,290px);min-height:150px;scroll-snap-align:start}.hero-stats strong{font-size:32px}.hero-stats>a>span:not(.stat-label){font-size:14px}.hero-stats small{font-size:10px}.welcome-hero{overflow:hidden}}
+.quiet-help { margin: 24px auto; max-width: 1100px; }
+.quiet-help summary, .discovery-options summary { cursor: pointer; min-height: 48px; padding: 12px 0; font-size: 16px; }
+.quiet-help p { max-width: 65ch; }
+.quiet-help summary:focus-visible, .discovery-options summary:focus-visible { outline: 3px solid #806590; outline-offset: 4px; }
+@media (max-width:700px) {
+  .session-layout .camera-panel { display:block; padding:0; border-radius:0; }
+  .camera-panel-heading { margin-bottom:12px; }
+  .camera-panel .camera-window { width:100%; }
+  .camera-panel>p { margin-top:12px; }
+}

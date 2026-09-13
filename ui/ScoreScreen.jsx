@@ -50,7 +50,6 @@ export default function ScoreScreen({
         <SimonArt expression="cheer" />
       </div>
       <div className="recap-copy">
-        <p className="eyebrow">A LITTLE MOVEMENT, WELL SPENT</p>
         <h1>
           {eliminated ? 'That’s all three lives!' : 'All done!'}
         </h1>
@@ -64,20 +63,16 @@ export default function ScoreScreen({
             {total ? `${score}/${total}` : "—"}
           </span>
           <p>
-            {total ? "Movement rounds completed correctly" : "No rounds scored this time"}
+            {total ? "Correct rounds" : "No rounds scored"}
           </p>
         </div>
         {lives != null && <p>{roundsPlayed} of 6 rounds played · {lives} {lives === 1 ? 'life' : 'lives'} left</p>}
         {discovery && (
           <p>
-            Discovery: {discovery.correct} correct from {discovery.answered}{" "}
-            answered questions. This does not change your movement score.
+            Discovery: {discovery.correct}/{discovery.answered} correct
           </p>
         )}
-        <p className="score-note">
-          {unscored} rounds skipped or not scored. Camera interruptions never
-          count against you.
-        </p>
+        {unscored > 0 && <p className="score-note">{unscored} unscored · no penalty</p>}
         {avgSec != null && (
           <div className="metrics">
             <span className="metric">

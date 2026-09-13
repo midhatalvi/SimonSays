@@ -54,13 +54,10 @@ export default function StartScreen({ onStart }) {
                 <br />Stay <em>sharp together.</em>
               </h1>
               <p className="hero-intro">
-                Turn a few everyday movements into a game you know.
-                Simon guides you with clear instructions, gentle encouragement,
-                and movements you choose—seated or standing.
+                A familiar game. Gentle movement. At your pace.
               </p>
               <p className="under-cta">
-                3 lives · 6 rounds <span>·</span> Sit or stand <span>·</span> Your
-                pace
+                3 lives · 6 rounds <span>·</span> Sit or stand
               </p>
             </div>
             <div className="hero-art">
@@ -81,14 +78,6 @@ export default function StartScreen({ onStart }) {
               <span className="hello-note">Oh, hello you!</span>
               <div className="art-disc" />
               <SimonArt />
-              <span className="art-sticker">
-                A good day starts
-                <br />
-                with a little <em>hello.</em>
-              </span>
-              <span className="art-caption">
-                THIS IS SIMON. HE’S GLAD YOU’RE HERE.
-              </span>
             </div>
             <div className="hero-stats" aria-label="Market and demand statistics">
               <a
@@ -127,58 +116,21 @@ export default function StartScreen({ onStart }) {
             </div>
           </section>
           <section className="why-simon" aria-labelledby="why-simon-title">
-            <div className="why-heading"><p className="eyebrow">WHY SIMON SAYS?</p><h2 id="why-simon-title">Familiar play.<br />Made to fit <em>you.</em></h2><p>A simple way to add movement, listening, and a little curiosity to your day.</p></div>
+            <div className="why-heading"><p className="eyebrow">WHY SIMON SAYS?</p><h2 id="why-simon-title">Made to fit <em>you.</em></h2></div>
             <div className="why-benefits">
-              <article><h3>Your comfort comes first.</h3><p>Choose hand and arm movements that feel right for you. Play seated or standing, and choose how much time you have for each move.</p></article>
-              <article><h3>Clear guidance, every round.</h3><p>Read the instruction on screen or listen to Simon’s voice. Large controls make it easy to pause, hear it again, or skip without a penalty.</p></article>
-              <article><h3>Your movements are the controls.</h3><p>Your webcam follows your chosen movements, so you can play without clicking an answer each round. Camera images are processed on your device.</p></article>
-              <article><h3>A familiar game. A little challenge.</h3><p>Move when Simon says. Otherwise, stay still. Start with three lives and play up to six rounds—a slip costs one life. Simon encourages you along the way.</p></article>
+              <article><h3>Move comfortably.</h3><p>Choose your movements and pace.</p></article>
+              <article><h3>Follow along.</h3><p>Clear words. A friendly voice.</p></article>
+              <article><h3>Just you and a camera.</h3><p>No controller or wearable needed.</p></article>
+              <article><h3>Stay curious.</h3><p>An optional discovery halfway through.</p></article>
             </div>
           </section>
-          <section id="how-it-works" className="how-section">
-            <div className="section-intro">
-              <p className="eyebrow">NOTHING TO MASTER. JUST ENJOY.</p>
-              <h2>
-                A familiar game,
-                <br />a gentler rhythm.
-              </h2>
-            </div>
-            <article>
-              <span className="step-mark">
-                01 <span aria-hidden="true">◔</span>
-              </span>
-              <h3>Listen for Simon.</h3>
-              <p>
-                When you hear “Simon says,” follow the move. Otherwise, stay
-                still.
-              </p>
-            </article>
-            <article>
-              <span className="step-mark">
-                02 <MoveIcon pose="ARMS_OUT" />
-              </span>
-              <h3>Make it your move.</h3>
-              <p>
-                Choose what feels comfortable. Pause or skip a round whenever you need.
-              </p>
-            </article>
-            <article>
-              <span className="step-mark">
-                03 <span aria-hidden="true">✳</span>
-              </span>
-              <h3>Keep your lives.</h3>
-              <p>
-                You have three lives. Moving on a trick or missing a move costs
-                one. Reach six rounds, or play again when your lives run out.
-              </p>
-            </article>
+          <section id="how-it-works" className="quiet-help">
+            <details><summary>How to play</summary><p>“Simon says…” — do the move. Otherwise, stay still.</p><p>Three lives. Six rounds. A slip costs one life; skips are free.</p></details>
           </section>
           <section className="reassurance">
             <span aria-hidden="true">♡</span>
             <p>
-              All you need is a camera, an internet connection, and room to move.
-              <br />
-              <strong>Choose your movements first. We’ll ask for camera access when you start.</strong>
+              A camera, internet, and a little room to move.
             </p>
             <a
               className="text-button"
@@ -200,22 +152,18 @@ export default function StartScreen({ onStart }) {
               <em>Your pace.</em>
             </h1>
             <p>
-              Choose your movements, then start the game. Sit or stand
-              comfortably.
+              Choose what feels comfortable.
             </p>
             <SimonArt />
-            <p className="privacy-note">
-              Your camera processes movement on this device. Voice prompts use
-              an online service. No microphone is needed.
-            </p>
+            <details className="quiet-help"><summary>Camera & privacy</summary><p>Movement is processed on this device. Voice uses an online service. No microphone needed.</p><p>The session ends after 10 seconds without reliable tracking or readiness.</p></details>
           </div>
           <div className="setup-form">
             <fieldset className="movement-field">
               <legend>
-                <span className="number-label">01</span> What feels good today?
+                <span className="number-label">01</span> Your movements
               </legend>
               <p className="field-help">
-                Choose at least one comfortable movement.
+                Choose one or more.
               </p>
               <div className="movement-grid">
                 {ACTIVE_POSES.map((pose) => (
@@ -245,8 +193,7 @@ export default function StartScreen({ onStart }) {
             </fieldset>
             <fieldset>
               <legend>
-                <span className="number-label">02</span> Leave yourself a little
-                time.
+                <span className="number-label">02</span> Your pace
               </legend>
               <div className="pace-options">
                 {[
@@ -276,8 +223,8 @@ export default function StartScreen({ onStart }) {
             <section className="discovery-settings">
               <label className="discovery-toggle">
                 <span>
-                  <strong>A little discovery, too?</strong>
-                  <small>Offer a question after three movement rounds.</small>
+                  <strong>Discovery break</strong>
+                  <small>One optional question halfway through.</small>
                 </span>
                 <input
                   type="checkbox"
@@ -308,21 +255,16 @@ export default function StartScreen({ onStart }) {
                       <option value="buttons">Answer buttons</option>
                     </select>
                   </label>
-                  <p>
-                    Always optional, with no time limit. Your topic goes to
-                    Tavily only if you accept the break.
+                  <details><summary>About discovery</summary><p>
+                    No time limit. Your topic goes to Tavily only if you accept.
                     {answerMode === "gestures"
                       ? " Your first two selected moves answer A and B; with one move, you’ll use buttons."
                       : ""}
-                  </p>
+                  </p></details>
                 </div>
               )}
             </section>
             <div className="setup-action">
-              <p>
-                Start with three lives. We’ll explain the rules when your camera is ready.
-                Relax your hands between rounds, then follow the next instruction only if Simon says.
-              </p>
               <button
                 className="big-btn"
                 disabled={!poses.length}
@@ -343,7 +285,7 @@ export default function StartScreen({ onStart }) {
                   Choose at least one comfortable movement to begin.
                 </p>
               )}
-              <small>Your camera will ask permission next. The session ends after 10 seconds without movement detection.</small>
+              <small>Camera permission comes next.</small>
             </div>
           </div>
         </main>
