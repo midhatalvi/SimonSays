@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useState } from "react";
 import "../ui/styles.css";
 import StartScreen from "../ui/StartScreen.jsx";
+import LearnScreen from "../ui/LearnScreen.jsx";
 import GameScreen from "../ui/GameScreen.jsx";
 import ScoreScreen from "../ui/ScoreScreen.jsx";
 
@@ -19,6 +20,8 @@ function PlayerApp() {
   const [result, setResult] = useState({ score: 0, total: 0 });
 
   if (phase === "start") return <StartScreen onStart={(chosen) => { setSettings(chosen); setPhase("game"); }} />;
+
+  if (phase === "game" && settings.mode === "learn") return <LearnScreen settings={settings} onExit={() => setPhase("start")} />;
 
   if (phase === "game")
     return (

@@ -20,7 +20,7 @@ Deploy to Vercel to use the `/api` handlers. The Vite-only preview does not serv
 
 ## Scope and evidence
 
-Tavily code remains present but is not connected to the active game. No latency, adoption, health, accessibility-compliance, or sponsor-prize claims have been validated. See [revised plan](docs/REVISED_PLAN.md) and [evidence cases](docs/EVIDENCE_CASES.md). These distinguish source inspection, executable synthetic cases, browser checks, and pending participant observations.
+Learn & Move is available alongside the movement game. It retrieves evidence through Tavily for a reviewed bank of four questions across Space and Animals; only supported questions appear. It does not generate arbitrary questions. Configure `TAVILY_API_KEY` server-side. Search failure blocks learning but leaves the movement game available. No latency, adoption, health, accessibility-compliance, or sponsor-prize claims have been validated. See [revised plan](docs/REVISED_PLAN.md) and [evidence cases](docs/EVIDENCE_CASES.md). These distinguish source inspection, executable synthetic cases, browser checks, and pending participant observations.
 
 ## Review
 
@@ -29,3 +29,9 @@ Review branch: `improve/review-ready-interactions`, targeting `main`. Merging an
 ## Observed-session handoff
 
 Use [the first playtest guide](docs/FIRST_PLAYTEST.md) for an actual participant. For reproducible browser UI examples only, run the dev server and add `?lab` to its URL. The lab is clearly labeled, uses no camera/cloud speech, and is not included in production builds.
+
+## Learn & Move
+
+Choose Space or Animals, then two comfortable gestures (A/B) or answer buttons without a camera. Practice both mappings before learning. Questions have no response deadline; missing tracking pauses gesture input and prolonged loss leaves a question unscored. Ambiguous gestures are not accepted. Correct answers and a retrieved excerpt/link appear after each answer or skip. Links remain on the final summary.
+
+The `/api/tavily` request is now `{ topic: "space" | "animals" }`; arbitrary query requests from the earlier unused trivia helper are replaced. Two bounded Tavily searches run per session. There is no offline question fallback. Server-side templates, domain restrictions, and matching evidence constrain the first version; these checks are not a general-purpose fact checker.

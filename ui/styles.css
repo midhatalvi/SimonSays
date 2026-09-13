@@ -380,3 +380,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
   .play-controls { position: sticky; bottom: 0; background: #fff8ee; padding: 10px 0; width: 100%; z-index: 2; }
   .play-controls button { padding: 12px; font-size: 1rem; }
 }
+.learn-screen { justify-content: flex-start; }
+.answer-card { border: 2px solid #725444; border-radius: 12px; padding: 16px; min-width: 180px; }
+.learn-screen blockquote { margin: 16px 0; text-align: left; padding: 12px; border-left: 4px solid #725444; }
+.learn-screen a { color: #145b75; text-decoration: underline; }

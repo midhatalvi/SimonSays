@@ -131,3 +131,6 @@ Deploy is automatic on push to main via Vercel.
 
 ## Fair-play revision
 User-authorized cross-folder integration: detector adds `tracking: boolean` while preserving matched/confidence. The engine requires tracking explicitly, excludes interrupted rounds from timing, and needs a neutral pose before Go. `resetPoseHistory` and `stopVision` manage session boundaries. Gentle play replaces elimination; the score excludes skips/tracking timeouts. Real pose detection is connected. Tavily remains outside the active game.
+
+## Learn & Move integration
+User-authorized next feature: separate learning mode uses `content/learningQuestions.js` reviewed templates and `/api/tavily` topic retrieval. It shows only questions with matching source evidence; this is not unconstrained AI question generation. Gesture answering uses `engine/learningEngine.js`, separate from the movement/trick engine. Two unscored mappings precede learning; source excerpts and answers are revealed afterward. Button answers provide a camera-free path.

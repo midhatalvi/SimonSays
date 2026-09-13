@@ -71,3 +71,11 @@ Using the development-only `?lab` harness and synthetic detector/speech inputs:
 - Ended the session while paused and observed return to setup and Detector released: Yes.
 
 These are browser interaction checks, not real-camera accuracy or live ElevenLabs latency measurements. Real participants and device coverage remain pending in FIRST_PLAYTEST.md.
+
+## Learn & Move validation
+
+Added automated cases for source/domain requirements, unsafe citation URLs, answer shuffling, exclusive vs ambiguous gesture selection, missing tracking, neutral readiness, missing API configuration, and partial upstream failure.
+
+Chrome synthetic learning example completed practice A and B, answered the question incorrectly, showed the correct answer and citation excerpt/link, then showed 0 correct from 1 answered. Both practice answers were excluded. This uses fixtures, not live search or real camera input.
+
+Live Tavily retrieval depends on the deployment key. Evidence matching uses reviewed topic templates; it is not semantic fact-checking or arbitrary question generation. Four question templates (two per topic) are the current coverage. Participant validation and real-device gesture accuracy remain pending.

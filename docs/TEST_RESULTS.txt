@@ -6,124 +6,172 @@ TAP version 13
 # Subtest: missing tracking cannot pass a trick round
 ok 1 - missing tracking cannot pass a trick round
   ---
-  duration_ms: 0.522458
+  duration_ms: 0.510083
   type: 'test'
   ...
 # Subtest: loss of tracking cannot fail a movement round
 ok 2 - loss of tracking cannot fail a movement round
   ---
-  duration_ms: 0.132584
+  duration_ms: 0.136083
   type: 'test'
   ...
 # Subtest: held-over pose must return to neutral before it can score
 ok 3 - held-over pose must return to neutral before it can score
   ---
-  duration_ms: 0.10075
+  duration_ms: 0.107625
   type: 'test'
   ...
 # Subtest: visible still player passes full trick window
 ok 4 - visible still player passes full trick window
   ---
-  duration_ms: 0.060959
+  duration_ms: 0.065875
   type: 'test'
   ...
 # Subtest: moving on trick fails after neutral readiness
 ok 5 - moving on trick fails after neutral readiness
   ---
-  duration_ms: 0.118417
+  duration_ms: 0.114833
   type: 'test'
   ...
 # Subtest: tracking recovery requires neutral and excludes timing metric
 ok 6 - tracking recovery requires neutral and excludes timing metric
   ---
-  duration_ms: 0.062041
+  duration_ms: 0.05975
   type: 'test'
   ...
 # Subtest: pause consumes no response-window time
 ok 7 - pause consumes no response-window time
   ---
-  duration_ms: 0.15075
+  duration_ms: 0.146625
   type: 'test'
   ...
 # Subtest: abort ends round without score
 ok 8 - abort ends round without score
   ---
-  duration_ms: 0.09525
+  duration_ms: 0.09375
   type: 'test'
   ...
 # Subtest: mid-round tracking loss does not consume the remaining trick window
 ok 9 - mid-round tracking loss does not consume the remaining trick window
   ---
-  duration_ms: 0.230084
+  duration_ms: 0.22025
   type: 'test'
   ...
 # Subtest: a held pose never scores without a neutral transition
 ok 10 - a held pose never scores without a neutral transition
   ---
-  duration_ms: 0.593167
+  duration_ms: 0.603667
+  type: 'test'
+  ...
+# Subtest: question requires supporting evidence from an allowed HTTPS source
+ok 11 - question requires supporting evidence from an allowed HTTPS source
+  ---
+  duration_ms: 1.071375
+  type: 'test'
+  ...
+# Subtest: shuffling preserves correct answer and source
+ok 12 - shuffling preserves correct answer and source
+  ---
+  duration_ms: 0.15925
+  type: 'test'
+  ...
+# Subtest: exclusive gesture selects the mapped answer
+ok 13 - exclusive gesture selects the mapped answer
+  ---
+  duration_ms: 0.170084
+  type: 'test'
+  ...
+# Subtest: ambiguous two-gesture match is not accepted
+ok 14 - ambiguous two-gesture match is not accepted
+  ---
+  duration_ms: 0.14275
+  type: 'test'
+  ...
+# Subtest: missing tracking never selects an answer
+ok 15 - missing tracking never selects an answer
+  ---
+  duration_ms: 0.065084
+  type: 'test'
+  ...
+# Subtest: held pose requires neutral before answering
+ok 16 - held pose requires neutral before answering
+  ---
+  duration_ms: 0.064708
+  type: 'test'
+  ...
+# Subtest: API rejects unknown topics and missing configuration
+ok 17 - API rejects unknown topics and missing configuration
+  ---
+  duration_ms: 0.174958
+  type: 'test'
+  ...
+# Subtest: API serves supported questions despite partial upstream failure
+ok 18 - API serves supported questions despite partial upstream failure
+  ---
+  duration_ms: 0.226083
   type: 'test'
   ...
 # Subtest: preloading and playback share one request
-ok 11 - preloading and playback share one request
+ok 19 - preloading and playback share one request
   ---
-  duration_ms: 0.563667
+  duration_ms: 0.637667
   type: 'test'
   ...
 # Subtest: temporary speech failure is retryable
-ok 12 - temporary speech failure is retryable
+ok 20 - temporary speech failure is retryable
   ---
-  duration_ms: 0.448917
+  duration_ms: 0.461708
   type: 'test'
   ...
 # Subtest: speech request timeout releases caller for fallback
-ok 13 - speech request timeout releases caller for fallback
+ok 21 - speech request timeout releases caller for fallback
   ---
-  duration_ms: 11.868959
+  duration_ms: 10.795833
   type: 'test'
   ...
 # Subtest: successful prepared audio completes and releases player
-ok 14 - successful prepared audio completes and releases player
+ok 22 - successful prepared audio completes and releases player
   ---
-  duration_ms: 2.538541
+  duration_ms: 1.634042
   type: 'test'
   ...
 # Subtest: audio playback rejection falls back to browser speech
-ok 15 - audio playback rejection falls back to browser speech
+ok 23 - audio playback rejection falls back to browser speech
   ---
-  duration_ms: 1.283708
+  duration_ms: 0.87875
   type: 'test'
   ...
 # Subtest: already cancelled speech makes no network or playback request
-ok 16 - already cancelled speech makes no network or playback request
+ok 24 - already cancelled speech makes no network or playback request
   ---
-  duration_ms: 0.645
+  duration_ms: 0.567042
   type: 'test'
   ...
 # Subtest: aborting while audio plays ends promptly
-ok 17 - aborting while audio plays ends promptly
+ok 25 - aborting while audio plays ends promptly
   ---
-  duration_ms: 0.809084
+  duration_ms: 0.72075
   type: 'test'
   ...
-1..17
-# tests 17
+1..25
+# tests 25
 # suites 0
-# pass 17
+# pass 25
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 47.219291
+# duration_ms 46.690375
 
 > simonsays@0.0.1 build
 > vite build
 
 vite v5.4.21 building for production...
 transforming...
-✓ 42 modules transformed.
+✓ 45 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                   0.80 kB │ gzip:  0.43 kB
-dist/assets/index-CtJWLx2l.css   11.03 kB │ gzip:  3.12 kB
-dist/assets/index-zQ_7if9r.js   290.05 kB │ gzip: 92.20 kB
-✓ built in 392ms
+dist/assets/index-BcQ7zHse.css   11.31 kB │ gzip:  3.20 kB
+dist/assets/index-CWATEz1x.js   298.51 kB │ gzip: 94.95 kB
+✓ built in 415ms
