@@ -37,7 +37,7 @@ cp .env.example .env
 
 The example file supplies a voice ID, so copying it selects that voice rather than the proxy's default. Keep keys server-side; do not use `VITE_` variables for secrets.
 
-**`npm run dev` runs Vite only.** It neither hosts the serverless functions nor configures an API proxy. Copying `.env` alone will not activate the APIs. Use an environment that runs Vercel's serverless functions, such as a configured Vercel deployment, to exercise those endpoints. The discovery break is integrated: enable it in setup and accept the halfway offer to call Tavily.
+In the integrated local build, `npm run dev` runs the same Tavily and ElevenLabs handlers through `server/devApi.js`. Put the server keys in a gitignored `.env.local` and restart the server. Missing keys return a recoverable service error. Secrets are never exposed as `VITE_` variables. Accept the halfway offer to call Tavily; discovery is enabled by default.
 
 ## Build and preview
 

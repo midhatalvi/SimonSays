@@ -5,13 +5,14 @@ import { say, prepareSpeech, cancelSpeech } from '../voice/elevenlabs.js';
 import LearnScreen from './LearnScreen.jsx';
 import { getLearningQuestions } from '../content/tavilyRounds.js';
 import SimonCharacter from './SimonCharacter.jsx';
+import { STARTING_LIVES, summarizeSession } from '../engine/sessionScore.js';
 
 const liveRuntime = { getLearningQuestions, checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const labels = {
   neutral: 'Relax your hands below your shoulders. Keep them in view.',
   active: 'Go: follow the instruction only if Simon says.',
-  'tracking-lost': 'Camera cannot see the needed body points. Timer paused. Move back into view.',
+  'tracking-lost': 'Move into view so Simon can see the selected movement. The session ends after 10 seconds without detection.',
   paused: 'Paused. Take your time.',
 };
 
@@ -22,11 +23,14 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
   const [prompt, setPrompt] = useState('Getting the camera ready…');
   const [status, setStatus] = useState('Loading the movement detector…');
   const [roundNumber, setRoundNumber] = useState(0);
+  const [lives, setLives] = useState(STARTING_LIVES);
+  const [expression, setExpression] = useState('happy');
   const [countdown, setCountdown] = useState(null);
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState(false);
-  const [practiceReview, setPracticeReview] = useState(false);
-  const practiceChoice = useRef(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [detectionEnded, setDetectionEnded] = useState(false);
   const [repeatBusy, setRepeatBusy] = useState(false);
   const [canControl, setCanControl] = useState(false);
   const pausedRef = useRef(false), activeController = useRef(null), session = useRef(null);
@@ -34,6 +38,8 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
   doneRef.current = onDone;
 
   useEffect(() => {
+    setError(false); setCameraReady(false); setDetectionEnded(false);
+    setLives(STARTING_LIVES); setRoundNumber(0); setExpression('happy');
     const controller = new AbortController(); session.current = controller;
     const signal = controller.signal;
     let running = false;
@@ -41,63 +47,77 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     const timer = setTimeout(async () => {
       running = true;
       const rounds = buildRounds(6, settings.seconds, settings.poses).map(r => ({ ...r, timeLimitSec: settings.seconds }));
-      const practice = { ...rounds[0], simonSays: true,
-        promptText: 'Simon says ' + rounds[0].promptText.replace(/^Simon says /, '').toLowerCase(),
-        timeLimitSec: Math.max(10, settings.seconds) };
-      practice.spokenText = practice.promptText;
-      void prepareSpeech(practice.spokenText);
-      checkPose(practice.targetPose);
+      void prepareSpeech(rounds[0].spokenText);
+      checkPose(rounds[0].targetPose);
       const deadline = Date.now() + 25000;
       while (!signal.aborted && getVisionStatus().status === 'loading' && Date.now() < deadline) await wait(100);
       if (signal.aborted) return;
       if (getVisionStatus().status !== 'ready') { setError(true); stopVision(); return; }
+      setCameraReady(true);
+      setPrompt('Let’s stay sharp together.');
+      setStatus('“Simon says…”: do the move. Otherwise, stay still. You have 3 lives; a slip costs one.');
+      await say('When I say Simon says, do the move. Otherwise, stay still and keep your hands in view. You have three lives. A slip costs one. Let’s stay sharp together.', { signal });
+      for (const count of [3, 2, 1]) {
+        if (signal.aborted) return;
+        setPrompt(`Get ready… ${count}`);
+        await wait(700);
+      }
       const results = [];
-      const sessionRounds = [practice, ...rounds];
+      const sessionRounds = rounds;
       for (let index = 0; index < sessionRounds.length; index++) {
         const round = sessionRounds[index];
         if (signal.aborted) break;
         while (pausedRef.current && !signal.aborted) await wait(100);
         if (signal.aborted) break;
-        setRoundNumber(index); setCountdown(null);
+        setRoundNumber(index + 1); setCountdown(null);
+        setExpression('happy');
         command.current = round.spokenText || round.promptText;
-        setPrompt(round.promptText);
-        setStatus(index === 0 ? 'Practice — no score. Listen, relax your hands, then wait for Go.' : 'Listen, relax your hands, then wait for Go.');
-        const next = rounds[index];
+        setPrompt('Ready for the next move?');
+        setStatus('Relax your hands so Simon can get ready.');
+        const next = rounds[index + 1];
         if (next) void prepareSpeech(next.spokenText || next.promptText);
-        const positive = index === 0 ? 'You did it. Practice again, or start when you feel ready.' : reactionFor(true, round.simonSays);
-        const negative = index === 0 ? 'No score in practice. Try again, or choose a different movement in setup.' : reactionFor(false, round.simonSays);
+        const positive = reactionFor(true, round.simonSays);
+        const negative = reactionFor(false, round.simonSays);
         const unscored = 'No score for this round. Let’s try another.';
         void prepareSpeech(positive);
         void prepareSpeech(negative);
         void prepareSpeech(unscored);
-        await say(command.current, { signal });
-        if (signal.aborted) break;
         const roundController = new AbortController(); activeController.current = roundController;
         const abortRound = () => roundController.abort();
         signal.addEventListener('abort', abortRound, { once: true });
         skip.current = false; setCanControl(true);
+        let instructionSpeech = Promise.resolve();
         const result = await judgeRound(round, checkPose, setCountdown, {
-          signal: roundController.signal, isPaused: () => pausedRef.current,
-          reset: resetPoseHistory, onState: state => setStatus(labels[state]),
+          maxTrackingWaitMs: 10000, signal: roundController.signal, isPaused: () => pausedRef.current,
+          reset: resetPoseHistory, onState: state => setStatus(state === 'tracking-lost'
+            ? `${getVisionStatus().trackingHint || labels[state]} The session ends after 10 seconds without reliable tracking.`
+            : labels[state]),
+          onReady: async () => {
+            setPrompt(round.promptText);
+            setStatus('Listen to Simon. You can follow the instruction now.');
+            instructionSpeech = say(command.current, { signal: roundController.signal });
+            await instructionSpeech;
+          },
         });
+        await instructionSpeech;
         signal.removeEventListener('abort', abortRound);
         setCanControl(false); setCountdown(null);
         if (signal.aborted) break;
         if (skip.current) result.reason = 'skipped';
-        if (index > 0) results.push(result);
-        const feedback = result.passed == null ? unscored : result.passed ? positive : negative;
-        setStatus(feedback);
-        await say(feedback, { signal });
-        if (index === 0 && !signal.aborted) {
-          practiceChoice.current = null;
-          setPracticeReview(true);
-          while (!practiceChoice.current && !signal.aborted) await wait(100);
-          if (signal.aborted) break;
-          setPracticeReview(false);
-          if (practiceChoice.current === 'retry') index--;
+        if (result.reason === 'tracking-timeout' || result.reason === 'readiness-timeout') {
+          stopVision(); cancelSpeech(); setCameraReady(false); setDetectionEnded(result.reason);
+          return;
         }
-        if (index === 3 && settings.discovery && !signal.aborted) {
-          stopVision();
+        results.push(result);
+        const summary = summarizeSession(results);
+        setLives(summary.lives);
+        setExpression(result.passed === true ? 'cheer' : result.passed === false ? 'oops' : 'happy');
+        const feedback = result.passed == null ? unscored : result.passed ? positive : negative;
+        setStatus(result.passed === false ? `${feedback} ${summary.lives} ${summary.lives === 1 ? 'life' : 'lives'} left.` : feedback);
+        await say(feedback, { signal });
+        if (summary.eliminated) break;
+        if (index === 2 && settings.discovery && !signal.aborted) {
+          stopVision(); setCameraReady(false);
           discoveryChoice.current = null;
           setDiscovery('offer');
           while (!discoveryChoice.current && !signal.aborted) await wait(100);
@@ -107,23 +127,27 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
           await wait(100);
           if (signal.aborted) break;
           pausedRef.current = false; setPaused(false);
+          setStatus('Getting your camera ready again…');
+          checkPose(settings.poses[0]);
+          const reconnectDeadline = Date.now() + 25000;
+          while (!signal.aborted && getVisionStatus().status === 'loading' && Date.now() < reconnectDeadline) await wait(100);
+          if (signal.aborted) break;
+          if (getVisionStatus().status !== 'ready') { setError(true); stopVision(); return; }
+          setCameraReady(true);
           setStatus('Back to movement. Listen for Simon says.');
           await say('Back to movement. Follow the instruction only if Simon says.', { signal });
         }
       }
       if (!signal.aborted) {
         stopVision();
-        const scored = results.filter(r => r.passed != null);
-        doneRef.current({ score: scored.filter(r => r.passed).length, total: scored.length,
-          roundsPlayed: results.length, eliminated: false, reactions: [],
-          discovery: discoveryResult.current, unscored: results.length - scored.length });
+        doneRef.current({ ...summarizeSession(results), discovery: discoveryResult.current });
       }
     }, 0);
     return () => {
       clearTimeout(timer); controller.abort(); activeController.current?.abort(); cancelSpeech();
       if (running) stopVision();
     };
-  }, [settings, runtime]);
+  }, [settings, runtime, attempt]);
 
   async function repeat() {
     pausedRef.current = true; setPaused(true); setRepeatBusy(true);
@@ -134,7 +158,8 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     discoveryResult.current = summary;
     setDiscovery(null); discoveryChoice.current = 'continue';
   }
-  if (discovery === 'offer') return <main className="screen setup-screen">
+  if (detectionEnded) return <main className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">SESSION ENDED · CAMERA OFF</p><h1>{detectionEnded === 'readiness-timeout' ? 'Let’s adjust your starting position' : 'Simon couldn’t keep you in view'}</h1><p>{detectionEnded === 'readiness-timeout' ? 'Simon could not confirm a relaxed starting position within 10 seconds. Lower your hands below your shoulders, keeping them in the camera frame.' : 'The camera could not reliably see the body points needed for your movement within 10 seconds. Check that your head, shoulders, and hands fit in the frame.'}</p><p>Your camera is now off. Try again or choose a different movement.</p>{onExit && <button className="big-btn" onClick={onExit}>Back to setup</button>}</main>;
+  if (discovery === 'offer') return <main className="screen discovery-offer"><p className="eyebrow">HALFWAY THROUGH · YOUR CHOICE</p><SimonCharacter />
     <h1>Ready for a discovery break?</h1>
     <p>You’ve finished three movement rounds. Explore one {settings.topic} question, or keep moving.</p>
     <p>Question answers are separate from your movement score.</p>
@@ -144,22 +169,19 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
   </main>;
   if (discovery === 'question') return <LearnScreen settings={settings} runtime={runtime}
     onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
-  if (error) return <div className="screen"><h1>Camera setup needs another try</h1>
-    <p>Check camera permission and your connection, then reload. You have not lost any points.</p>
-    <button className="big-btn" onClick={() => window.location.reload()}>Try again</button>
+  if (error) return <div className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">LET’S GET YOU CONNECTED</p><h1>Camera setup needs another try</h1>
+    <p>Allow camera access in your browser and make sure the camera is available. Then try again. You have not lost any points.</p>
+    <button className="big-btn" onClick={() => setAttempt(value => value + 1)}>Try again</button>
     {onExit && <button onClick={onExit}>Back to setup</button>}</div>;
-  return <div className="screen fair-game">
-    <div id="camera-preview-slot" aria-label="Camera preview" />
-    <p>{roundNumber === 0 ? 'Practice' : `Round ${roundNumber} of 6`}</p>
-    <SimonCharacter expression="happy" />
+  return <main className="session-layout">
+    <aside className="camera-panel"><div className="camera-panel-heading"><strong>You & Simon</strong><span>{cameraReady ? "Camera connected" : "Connecting camera"}</span></div><div className="camera-window"><div className="camera-placeholder">Your camera view will appear here.</div><div id="camera-preview-slot" aria-label="Live camera preview" /></div><p>Keep your head, shoulders, and hands in view. Sit or stand comfortably.</p><span className="camera-privacy">Camera frames stay on this device. No microphone needed.</span><div className="rule-reminder"><h2>A little reminder</h2><p><strong>“Simon says…”</strong> Do the move.</p><p><strong>No “Simon says”?</strong> Stay still.</p><p>Relax your hands, then wait for “Go.”</p></div></aside><div className="screen fair-game">
+    <p className="round-label">{!cameraReady ? 'Camera setup' : roundNumber === 0 ? 'How to play' : `Round ${roundNumber} of 6`}</p>
+    {cameraReady && <p className="lives-display" role="status" aria-label={`${lives} lives left`}><span aria-hidden="true">{'♥'.repeat(lives)}{'♡'.repeat(STARTING_LIVES - lives)}</span> <span>{lives} {lives === 1 ? 'life' : 'lives'} left · A slip costs one</span></p>}
+    <SimonCharacter expression={expression} />
     <h1 className="instruction">{prompt}</h1>
     <p role="status" aria-live="polite">{status}</p>
     {countdown != null && <p aria-label="Seconds remaining">{countdown}s remaining</p>}
-    {practiceReview && <div className="play-controls" aria-label="Practice choices">
-      <button onClick={() => { practiceChoice.current = 'retry'; }}>Practice again</button>
-      <button onClick={() => { practiceChoice.current = 'start'; }}>I’m ready — start game</button>
-    </div>}
-    <div className="play-controls">
+    <div className="play-controls" aria-label="Session controls">
       <button disabled={!canControl || repeatBusy} onClick={() => {
         pausedRef.current = !pausedRef.current; setPaused(pausedRef.current);
       }}>{paused ? 'Resume' : 'Pause'}</button>
@@ -169,5 +191,6 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
       }}>Skip — no penalty</button>
       {onExit && <button onClick={onExit}>End session / change movements</button>}
     </div>
-  </div>;
+    <p className="session-bottom-note">Small moves count. Pause or skip whenever you need.</p>
+  </div></main>;
 }

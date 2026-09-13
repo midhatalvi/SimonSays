@@ -8,7 +8,7 @@ const names = { RIGHT_HAND_UP: 'Raise right hand', LEFT_HAND_UP: 'Raise left han
 const live = { getLearningQuestions, checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
 export default function LearnScreen({ settings, onExit, onFinish, runtime = live }) {
   const [questions, setQuestions] = useState(null), [error, setError] = useState('');
-  const [step, setStep] = useState(settings.answerMode === 'buttons' ? 2 : 0), [result, setResult] = useState(undefined);
+  const [step, setStep] = useState(2), [result, setResult] = useState(undefined);
   const [status, setStatus] = useState('Finding supporting sources…'), [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false), [repeatBusy, setRepeatBusy] = useState(false);
   const pause = useRef(false), turn = useRef(null), line = useRef(''), totals = useRef({ correct: 0, answered: 0 });
@@ -72,7 +72,7 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
     if (!turn.current?.signal.aborted) { setRepeatBusy(false); setStatus('Paused. Select Resume when you are ready to answer.'); }
   }
   return <main className="screen setup-screen learn-screen">
-    <h1>Discovery break</h1>
+    <p className="eyebrow">A MOMENT TO EXPLORE · NO TIME LIMIT</p><h1>Discovery break</h1>
     <p>This is a question round—choose A or B. No Simon says tricks here. Take your time.</p>
     <button onClick={() => onFinish && totals.current.answered ? onFinish({ ...totals.current }) : onExit()}>{onFinish ? 'Return to movement' : 'Back to setup'}</button>
     {!buttons && questions && result === undefined && <button onClick={() => { turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); setError(''); setButtons(true); setStep(s => Math.max(2, s)); }}>Use answer buttons instead</button>}

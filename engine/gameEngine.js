@@ -96,7 +96,7 @@ export function reactionFor(passed, simonSays = true) {
 export async function judgeRound(round, checkPose, onTick, options = {}) {
   const { signal, isPaused = () => false, onState = () => {},
     now = () => performance.now(), sleep = ms => new Promise(r => setTimeout(r, ms)),
-    reset = () => {}, maxTrackingWaitMs = 15000 } = options;
+    reset = () => {}, onReady = async () => {}, maxTrackingWaitMs = 15000 } = options;
   let activeMs = 0, previous = now(), neutralMs = 0, neutral = false;
   let lostMs = 0, interrupted = false, previousValid = false;
   reset();
@@ -115,13 +115,21 @@ export async function judgeRound(round, checkPose, onTick, options = {}) {
       if (lostMs >= maxTrackingWaitMs) return { passed: null, reactionMs: null, reason: "tracking-timeout" };
       await sleep(100); continue;
     }
-    lostMs = 0;
     if (!neutral) {
+      // Count all time waiting for reliable readiness, including intermittent
+      // tracking. A single visible frame must not restart this deadline.
+      lostMs += delta;
+      if (lostMs >= maxTrackingWaitMs)
+        return { passed: null, reactionMs: null, reason: 'readiness-timeout' };
       onState("neutral");
-      neutralMs = pose.confidence < 0.25 ? neutralMs + (previousValid ? delta : 0) : 0;
+      neutralMs = (pose.ready ?? pose.confidence < 0.25) ? neutralMs + (previousValid ? delta : 0) : 0;
       previousValid = true;
       if (neutralMs >= 400) {
-        neutral = true; reset(); previousValid = false;
+        // Establish readiness BEFORE revealing the instruction. Otherwise a
+        // player who follows the spoken command immediately is stuck here.
+        await onReady();
+        if (signal?.aborted) break;
+        neutral = true; lostMs = 0; reset(); previousValid = false; previous = now();
       }
       await sleep(100); continue;
     }

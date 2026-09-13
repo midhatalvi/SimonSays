@@ -32,6 +32,8 @@ Review commit `814f65c` adds user-authorized cross-folder integration: tracking 
 
 ## Shared contract change record
 
+The user-authorized local flow repair adds an optional `ready` boolean to the real detector result: visible hands below shoulder height. The engine falls back to the existing confidence-based readiness for older mocks. Local gameplay restores three lives, removes practice, and enables the optional discovery offer by default. See `docs/current-build.md` for the local revision; the historical sections below describe earlier states.
+
 The upstream review revision adds `tracking: boolean` to the detector result and requires it in the engine, plus `resetPoseHistory` and `stopVision` lifecycle helpers. Shared JSDoc has not caught up. This documentation edit changes no executable interfaces. See [shared contracts](shared/README.md) for current behavior.
 
 ## Original hackathon priorities
