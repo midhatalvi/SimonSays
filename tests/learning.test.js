@@ -40,7 +40,7 @@ test('API rejects unknown topics and missing configuration', async () => {
   const key = process.env.TAVILY_API_KEY; delete process.env.TAVILY_API_KEY;
   try {
     let res=response(); await handler({method:'POST',body:{topic:'unknown'}},res); assert.equal(res.code,400);
-    res=response(); await handler({method:'POST',body:{topic:'space'}},res); assert.equal(res.code,503);
+    res=response(); await handler({method:'POST',body:{topic:'space'}},res); assert.equal(res.code,200); assert.equal(res.body.discovery.retrieval,'curated');
   } finally { if (key !== undefined) process.env.TAVILY_API_KEY=key; }
 });
 test('API serves supported questions despite partial upstream failure', async () => {
@@ -93,8 +93,8 @@ test('malformed and unavailable search results return recoverable error without 
     return {ok:true,json:async()=>{throw Error('invalid JSON');}};
   }, async () => {
     const res=response(); await handler({method:'POST',body:{topic:'animals'}},res);
-    assert.equal(res.code,503); assert.equal(res.body.questions,undefined); assert.equal(calls,2);
-    assert.match(res.body.error,/Return to movement/);
+    assert.equal(res.code,200); assert.equal(res.body.discovery.retrieval,'curated'); assert.equal(calls,2);
+    assert.equal(res.body.discovery.movementHook,'whale');
   });
 });
 test('invalid requests perform no upstream searches', async () => {

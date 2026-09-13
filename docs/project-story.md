@@ -22,7 +22,7 @@ Starting a movement activity can feel like work before any movement begins. Prod
 
 The three-life rule gives the session a recognizable goal and a little tension. The redesign keeps the original story—Simon wants to “stay sharp together”—while adding clearer setup, visible rules, recovery controls, and camera privacy language.
 
-The optional discovery break extends attentive listening into curiosity. After round three, the player may request one sourced Space or Animals question through Tavily or keep moving. Discovery is deliberately separate from movement scoring.
+The optional discovery extends attentive listening into curiosity. After round two, the player may request one sourced Space or Animals fact through Tavily or keep moving. The fact inspires round three and returns as a recall question after the movement rounds. Discovery remains separate from movement scoring.
 
 ## Product principles
 

@@ -6,7 +6,7 @@ This ledger separates what has been verified from what remains uncertain. It con
 
 ## Automated checks
 
-`npm test` currently passes 52 cases. They cover:
+`npm test` currently passes 58 cases. Discovery-loop coverage includes canonical response normalization, source rejection, malformed/network fallback, every supported selected-pose mapping, same-fact recall, separate score accounting, and no search on declined/disabled discovery. They also cover:
 
 - tracking loss, intermittent tracking, readiness deadlines, pause, skip, and cancellation;
 - three lives, early elimination, completed sessions, and unscored rounds;
@@ -21,7 +21,7 @@ These tests use synthetic landmarks, detector traces, and mocked services. They 
 The development-only `/?lab` flow has completed:
 
 - rules and movement rounds;
-- the halfway discovery offer;
+- the discovery offer after round two;
 - a synthetic A/B answer and evidence disclosure;
 - return to the same movement session;
 - three-life elimination and results;

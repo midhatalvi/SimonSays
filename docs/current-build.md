@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Architecture](architecture.md) · [Validation evidence](EVIDENCE_CASES.md)
 
-The current review is [PR #2](https://github.com/midhatalvi/SimonSays/pull/2) on `design/a-little-lift`, based on the main branch that includes merged PR #1.
+The local discovery-loop update builds on main commit `d022c28`. PRs #1–#3 preceded this update. See [architecture](architecture.md) for the current fact → movement → recall contract.
 
 ## Implemented
 
@@ -10,7 +10,7 @@ The current review is [PR #2](https://github.com/midhatalvi/SimonSays/pull/2) on
 - No practice round; the game explains rules after camera startup.
 - Comfortable movement selection and 5, 8, or 12-second timing.
 - Pause, repeat, skip without penalty, exit, and replay.
-- Default-enabled optional Tavily discovery after round three.
+- Default-enabled Tavily discovery after round two, a sourced themed movement in round three, and same-fact recall after the movement rounds. Players may decline discovery.
 - Separate movement and discovery scoring.
 - Bespoke responsive identity and locally hosted licensed fonts.
 - On-device MediaPipe detection with finger-aware touches and movement-specific readiness.
@@ -19,10 +19,12 @@ The current review is [PR #2](https://github.com/midhatalvi/SimonSays/pull/2) on
 
 ## Verified
 
-- 52 automated tests pass.
+- Discovery-loop browser check: Animals → curated fact → selected right-hand movement → six rounds → same-fact recall → recap. A deliberately wrong recall answer produced discovery 0/1 while movement remained 6/6 and lives stayed at 3. This used synthetic pose input and simulated speech, not a real webcam or ElevenLabs.
+
+- 58 automated tests pass, including strict discovery normalization, source rejection, client fallback, safe selected-pose mapping, recall consistency, and discovery skip privacy.
 - The production build passes.
 - The complete synthetic browser flow reaches discovery, resumes movement, and reaches results.
-- Authenticated Tavily returned a NASA-supported question locally.
+- Authenticated Tavily returned a NOAA-backed Animals gameplay object locally for the discovery loop.
 - The supplied Tavily key remains in an ignored local environment file and is not committed.
 
 ## Known limitations

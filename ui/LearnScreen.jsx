@@ -3,10 +3,12 @@ import { getLearningQuestions } from '../content/tavilyRounds.js';
 import { readAnswer } from '../engine/learningEngine.js';
 import { checkPose, getVisionStatus, resetPoseHistory, stopVision } from '../vision/checkPose.js';
 import { say, prepareSpeech, cancelSpeech } from '../voice/elevenlabs.js';
+import { recallCard } from '../content/discovery.js';
+import DiscoverySource from './DiscoverySource.jsx';
 const names = { RIGHT_HAND_UP: 'Raise right hand', LEFT_HAND_UP: 'Raise left hand', TOUCH_HEAD: 'Touch head',
   TOUCH_NOSE: 'Touch nose', TOUCH_SHOULDERS: 'Touch shoulders', ARMS_OUT: 'Arms out wide' };
 const live = { getLearningQuestions, checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
-export default function LearnScreen({ settings, onExit, onFinish, runtime = live }) {
+export default function LearnScreen({ settings, onExit, onFinish, runtime = live, discoveryItem = null, finishLabel = 'See results' }) {
   const [questions, setQuestions] = useState(null), [error, setError] = useState('');
   const [step, setStep] = useState(2), [result, setResult] = useState(undefined);
   const [status, setStatus] = useState('Finding supporting sources…'), [ready, setReady] = useState(false);
@@ -15,13 +17,17 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
   const poses = settings.poses.slice(0, 2);
   const [buttons, setButtons] = useState(settings.answerMode === 'buttons');
   useEffect(() => {
+    if (discoveryItem) {
+      setQuestions([recallCard(discoveryItem)]);
+      return () => { turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); };
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => { controller.abort(); setError('Discovery search took too long. You can continue moving.'); }, 16000);
     runtime.getLearningQuestions(settings.topic, controller.signal).then(q => { if (!controller.signal.aborted) setQuestions(onFinish ? q.slice(0, 1) : q); }).catch(e => {
       if (!controller.signal.aborted) setError(e.message);
     }).finally(() => clearTimeout(timeout));
     return () => { clearTimeout(timeout); controller.abort(); turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); };
-  }, [settings, runtime]);
+  }, [settings, runtime, discoveryItem]);
   const practice = step < 2;
   const card = questions && (practice ? { question: `Practice: choose ${step === 0 ? 'A' : 'B'}. This is not scored.`,
     answers: ['A', 'B'], correct: step } : questions[step - 2]);
@@ -72,9 +78,10 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
     if (!turn.current?.signal.aborted) { setRepeatBusy(false); setStatus('Paused. Select Resume when you are ready to answer.'); }
   }
   return <main className="screen setup-screen learn-screen">
-    <h1>Discovery break</h1>
+    <h1>{discoveryItem ? 'A little remembering' : 'Discovery break'}</h1>
     <p>Choose A or B. No tricks. No rush.</p>
-    <button onClick={() => onFinish && totals.current.answered ? onFinish({ ...totals.current }) : onExit()}>{onFinish ? 'Return to movement' : 'Back to setup'}</button>
+    <button onClick={() => onFinish && totals.current.answered ? onFinish({ ...totals.current }) : onExit()}>{discoveryItem ? finishLabel : onFinish ? 'Return to movement' : 'Back to setup'}</button>
+    {discoveryItem && <DiscoverySource item={discoveryItem} movement={discoveryItem.movement} explain />}
     {!buttons && questions && result === undefined && <button onClick={() => { turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); setError(''); setButtons(true); setStep(s => Math.max(2, s)); }}>Use answer buttons instead</button>}
     {error ? <p role="alert">{error}</p> : finished ? <>
       <h2>Learning session complete</h2><p>{totals.current.correct} correct from {totals.current.answered} answered questions. Practice and skips were not scored.</p>
@@ -97,11 +104,11 @@ export default function LearnScreen({ settings, onExit, onFinish, runtime = live
         {!practice && <section aria-label="Answer evidence">
           <details><summary>Explore this fact</summary><blockquote>{card.source.excerpt}</blockquote>
           <a href={card.source.url} target="_blank" rel="noopener noreferrer">Read source: {card.source.title}</a>
-          <p>{card.source.synthetic ? 'Synthetic example — no live retrieval' : `Retrieved through Tavily · ${new Date(card.source.retrievedAt).toLocaleDateString()}`}</p></details>
+          {!discoveryItem && <p>{card.source.synthetic ? 'Synthetic example — no live retrieval' : 'Source from discovery'}</p>}</details>
         </section>}
         <div className="play-controls">
           {practice && <button onClick={() => { setQuestions([...questions]); }}>Practice again</button>}
-          <button onClick={() => { if (onFinish && !practice) onFinish({ ...totals.current }); else { setRepeatBusy(false); setStep(s => s + 1); } }}>{onFinish && !practice ? 'Back to movement' : step === 1 ? 'Start question' : 'Continue'}</button>
+          <button onClick={() => { if (onFinish && !practice) onFinish({ ...totals.current }); else { setRepeatBusy(false); setStep(s => s + 1); } }}>{discoveryItem ? finishLabel : onFinish && !practice ? 'Back to movement' : step === 1 ? 'Start question' : 'Continue'}</button>
         </div>
       </>}
     </>}

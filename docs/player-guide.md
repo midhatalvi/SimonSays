@@ -10,7 +10,7 @@ Use a device with a camera and enough room to move your hands comfortably. Sit o
 
 1. Select at least one comfortable movement.
 2. Choose a pace: **Relaxed — 12 seconds**, **Comfortable — 8 seconds**, or **Quick — 5 seconds**.
-3. Leave discovery on for an optional Space or Animals question after round three, or switch it off.
+3. Leave discovery on to connect a Space or Animals fact to your next movement and a later recall question, or switch it off.
 4. Choose gesture or button answers for discovery.
 5. Select **Play with Simon** and allow camera access.
 
@@ -30,17 +30,17 @@ Relax the requested hand or hands between rounds. Simon reveals the next instruc
 | Control | Result |
 | --- | --- |
 | Pause | Suspends judging until Resume is selected |
-| Repeat instruction | Repeats the current prompt |
+| Repeat | Repeats the current prompt |
 | Skip — no penalty | Leaves the round unscored and preserves lives |
-| End session / change movements | Turns off the camera and returns to setup |
+| End game | Turns off the camera and returns to setup |
 
 If the required body points cannot be tracked or readiness cannot be confirmed for ten seconds, the session ends without taking another life and the camera is released.
 
 ## Discovery break
 
-After round three, choose **Explore one fact** or **Keep moving**. Search begins only after the player accepts.
+After round two, choose **Explore animals/space** or **Keep moving**. Search begins only after you accept. Simon narrates a sourced fact; select **Let’s move** to play its themed movement in round 3. It uses a movement you already selected.
 
-Discovery has no Simon Says tricks and no time limit. Choose A or B with the selected gestures or buttons. The answer includes a source excerpt and link. Discovery results appear separately and do not change movement lives or score. If search is unavailable, return to movement.
+After the remaining movement rounds, remember the same fact with one A/B question. Recall has no Simon Says tricks or time limit. Choose with your selected gestures or buttons, or skip. Recall results appear separately and do not change movement lives or score. The source stays linked through the recap. If live search is unavailable, a labelled curated fact keeps discovery available.
 
 ## Camera and troubleshooting
 

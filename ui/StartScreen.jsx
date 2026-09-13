@@ -121,7 +121,7 @@ export default function StartScreen({ onStart }) {
               <article><h3>Move comfortably.</h3><p>Choose your movements and pace.</p></article>
               <article><h3>Follow along.</h3><p>Clear words. A friendly voice.</p></article>
               <article><h3>Just you and a camera.</h3><p>No controller or wearable needed.</p></article>
-              <article><h3>Stay curious.</h3><p>An optional discovery halfway through.</p></article>
+              <article><h3>Stay curious.</h3><p>One discovery, woven through the game.</p></article>
             </div>
           </section>
           <section id="how-it-works" className="quiet-help">
@@ -223,8 +223,8 @@ export default function StartScreen({ onStart }) {
             <section className="discovery-settings">
               <label className="discovery-toggle">
                 <span>
-                  <strong>Discovery break</strong>
-                  <small>One optional question halfway through.</small>
+                  <strong>Move with discovery</strong>
+                  <small>Discover a fact. Move. Remember.</small>
                 </span>
                 <input
                   type="checkbox"

@@ -46,6 +46,25 @@ test('each raised hand is specific to the requested side', () => {
   assert.ok(read('RIGHT_HAND_UP',lm).confidence < .35);
   assert.equal(read('RIGHT_HAND_UP',lm).ready,true);
 });
+test('either hand raise tolerates an obscured wrist with a visible raised finger', () => {
+  for (const [pose,wrist,finger] of [['LEFT_HAND_UP',15,19],['RIGHT_HAND_UP',16,20]]) {
+    const lm=body(); lm[wrist].visibility=0; move(lm,finger,lm[finger].x,.28);
+    const reading=read(pose,lm);
+    assert.equal(reading.tracking,true); assert.ok(reading.confidence >= .55);
+    assert.equal(reading.ready,false);
+    move(lm,finger,lm[finger].x,.45);
+    assert.ok(read(pose,lm).confidence < .35);
+    lm[finger].visibility=0;
+    assert.equal(read(pose,lm).tracking,false);
+  }
+});
+test('relaxed wrist permits readiness even with fingers pointing upward', () => {
+  for (const [pose,wrist,finger] of [['LEFT_HAND_UP',15,19],['RIGHT_HAND_UP',16,20]]) {
+    const lm=body(); move(lm,wrist,lm[wrist].x,.48); move(lm,finger,lm[finger].x,.4);
+    assert.equal(read(pose,lm).ready,true);
+    assert.equal(read(pose,lm).confidence,0);
+  }
+});
 test('both shoulder touches support crossed and uncrossed hands', () => {
   for (const [a,b] of [[.6,.4],[.4,.6]]) {
     const lm=body(); move(lm,19,a,.45); move(lm,20,b,.45);

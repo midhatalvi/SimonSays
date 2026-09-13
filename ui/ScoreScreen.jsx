@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { SimonArt } from "./Brand.jsx";
 import { say } from "../voice/elevenlabs.js";
+import DiscoverySource from './DiscoverySource.jsx';
 
 function warmNote(score, total) {
   const ratio = total ? score / total : 0;
@@ -73,6 +74,7 @@ export default function ScoreScreen({
           </p>
         )}
         {unscored > 0 && <p className="score-note">{unscored} unscored · no penalty</p>}
+        {(discovery?.items || (discovery?.item ? [discovery.item] : [])).map((item, i) => <DiscoverySource key={i} item={item} />)}
         {avgSec != null && (
           <div className="metrics">
             <span className="metric">

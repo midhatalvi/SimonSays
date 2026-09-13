@@ -166,12 +166,22 @@ function touchScore(points, anchor, scale, tolerance) {
   return clamp01(1 - Math.min(...points.map(p => dist(p, anchor))) / scale / tolerance);
 }
 
+function raisedHandY(lm, side) {
+  const wrist = lm[side === 'left' ? IDX.LEFT_WRIST : IDX.RIGHT_WRIST];
+  if (isVisible(wrist)) return wrist.y;
+  const points = handPoints(lm, side);
+  if (!points.length) return null;
+  // Fingers sit above the wrist in an open raised hand. Offset downward so
+  // merely lifting fingers at shoulder height does not count as an arm raise.
+  return Math.max(...points.map(p => p.y)) + shoulderWidth(lm) * 0.12;
+}
+
 function handUpScore(lm, side) {
   const shoulder = lm[side === "left" ? IDX.LEFT_SHOULDER : IDX.RIGHT_SHOULDER];
-  const wrist = lm[side === "left" ? IDX.LEFT_WRIST : IDX.RIGHT_WRIST];
-  if (!isVisible(shoulder) || !isVisible(wrist)) return 0;
+  const handY = raisedHandY(lm, side);
+  if (!isVisible(shoulder) || handY === null) return 0;
   const scale = shoulderWidth(lm) || 0.001;
-  const raiseAmount = (shoulder.y - wrist.y) / scale;
+  const raiseAmount = (shoulder.y - handY) / scale;
   return clamp01(raiseAmount / 0.6);
 }
 
@@ -270,6 +280,10 @@ export function evaluatePose(target, landmarks, aspect = 4 / 3) {
   const sides = target === POSES.LEFT_HAND_UP ? ['left'] : target === POSES.RIGHT_HAND_UP ? ['right'] : ['left', 'right'];
   const relaxed = sides.map(side => {
     const shoulder = lm[side === 'left' ? 11 : 12];
+    if (target === POSES.LEFT_HAND_UP || target === POSES.RIGHT_HAND_UP) {
+      const handY = raisedHandY(lm, side);
+      return handY !== null && handY >= shoulder.y - shoulderWidth(lm) * 0.05;
+    }
     const points = handPoints(lm, side);
     return points.length && points.every(p => p.y >= shoulder.y - shoulderWidth(lm) * 0.05);
   });

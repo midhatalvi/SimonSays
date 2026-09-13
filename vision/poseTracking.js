@@ -15,8 +15,8 @@ export function hasPoseTracking(target, lm, visible) {
   const leftHand = [15, 19, 21].some(i => visible(lm[i]));
   const rightHand = [16, 20, 22].some(i => visible(lm[i]));
   switch (target) {
-    case 'RIGHT_HAND_UP': return right;
-    case 'LEFT_HAND_UP': return left;
+    case 'RIGHT_HAND_UP': return rightHand;
+    case 'LEFT_HAND_UP': return leftHand;
     case 'TOUCH_NOSE': return visible(lm[0]) && (leftHand || rightHand);
     case 'TOUCH_HEAD': return [0, 7, 8].some(i => visible(lm[i])) && (leftHand || rightHand);
     case 'TOUCH_SHOULDERS': return leftHand && rightHand;

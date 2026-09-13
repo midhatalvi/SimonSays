@@ -6,6 +6,8 @@ import LearnScreen from './LearnScreen.jsx';
 import { getLearningQuestions } from '../content/tavilyRounds.js';
 import SimonCharacter from './SimonCharacter.jsx';
 import { STARTING_LIVES, summarizeSession } from '../engine/sessionScore.js';
+import DiscoveryScreen from './DiscoveryScreen.jsx';
+import DiscoverySource from './DiscoverySource.jsx';
 
 const liveRuntime = { getLearningQuestions, checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -19,6 +21,8 @@ const labels = {
 export default function GameScreen({ onDone, settings, onExit, runtime = liveRuntime }) {
   const { checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech } = runtime;
   const [discovery, setDiscovery] = useState(null);
+  const [sessionDiscovery, setSessionDiscovery] = useState(null);
+  const discovered = useRef(null);
   const discoveryChoice = useRef(null), discoveryResult = useRef(null);
   const [prompt, setPrompt] = useState('Getting the camera ready…');
   const [status, setStatus] = useState('Loading the movement detector…');
@@ -40,6 +44,7 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
   useEffect(() => {
     setError(false); setCameraReady(false); setDetectionEnded(false);
     setLives(STARTING_LIVES); setRoundNumber(0); setExpression('happy');
+    discovered.current = null; discoveryResult.current = null; setSessionDiscovery(null);
     const controller = new AbortController(); session.current = controller;
     const signal = controller.signal;
     let running = false;
@@ -116,12 +121,13 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
         setStatus(result.passed === false ? `${feedback} ${summary.lives} ${summary.lives === 1 ? 'life' : 'lives'} left.` : feedback);
         await say(feedback, { signal });
         if (summary.eliminated) break;
-        if (index === 2 && settings.discovery && !signal.aborted) {
+        if (index === 1 && settings.discovery && !signal.aborted) {
           stopVision(); setCameraReady(false);
           discoveryChoice.current = null;
           setDiscovery('offer');
           while (!discoveryChoice.current && !signal.aborted) await wait(100);
           if (signal.aborted) break;
+          if (discovered.current) sessionRounds[index + 1] = discovered.current.movement;
           setDiscovery(null);
           // Let the discovery screen release its detector before movement resumes.
           await wait(100);
@@ -140,7 +146,12 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
       }
       if (!signal.aborted) {
         stopVision();
-        doneRef.current({ ...summarizeSession(results), discovery: discoveryResult.current });
+        if (discovered.current) {
+          discoveryChoice.current = null;
+          setDiscovery('recall');
+          while (!discoveryChoice.current && !signal.aborted) await wait(100);
+        }
+        if (!signal.aborted) doneRef.current({ ...summarizeSession(results), discovery: discoveryResult.current });
       }
     }, 0);
     return () => {
@@ -155,18 +166,29 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     if (!session.current?.signal.aborted) setRepeatBusy(false);
   }
   function finishDiscovery(summary = null) {
-    discoveryResult.current = summary;
+    if (discovery === 'recall' && discovered.current && !discoveryChoice.current) {
+      const previous = discoveryResult.current || { correct: 0, answered: 0, items: [] };
+      discoveryResult.current = {
+        correct: previous.correct + (summary?.correct || 0),
+        answered: previous.answered + (summary?.answered || 0),
+        items: [...previous.items, discovered.current], item: discovered.current,
+      };
+    }
     setDiscovery(null); discoveryChoice.current = 'continue';
   }
   if (detectionEnded) return <main className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">SESSION ENDED · CAMERA OFF</p><h1>{detectionEnded === 'readiness-timeout' ? 'Let’s adjust your starting position' : 'Simon couldn’t keep you in view'}</h1><p>{detectionEnded === 'readiness-timeout' ? 'Simon could not confirm a relaxed starting position within 10 seconds. Lower your hands below your shoulders, keeping them in the camera frame.' : 'The camera could not reliably see the body points needed for your movement within 10 seconds. Check that your head, shoulders, and hands fit in the frame.'}</p><p>Your camera is now off. Try again or choose a different movement.</p>{onExit && <button className="big-btn" onClick={onExit}>Back to setup</button>}</main>;
-  if (discovery === 'offer') return <main className="screen discovery-offer"><p className="eyebrow">HALFWAY THROUGH · YOUR CHOICE</p><SimonCharacter />
-    <h1>Ready for a discovery break?</h1>
-    <p>One {settings.topic} question. Your movement score stays separate.</p>
-    <button className="big-btn" onClick={() => setDiscovery('question')}>Explore one fact</button>
+  if (discovery === 'offer') return <main className="screen discovery-offer"><p className="eyebrow">DISCOVERY · YOUR CHOICE</p><SimonCharacter />
+    <h1>Let curiosity lead the next move.</h1>
+    <p>Discover, move, then remember. Recall never costs a life.</p>
+    <button className="big-btn" onClick={() => setDiscovery('fact')}>Explore {settings.topic}</button>
     <button onClick={() => finishDiscovery()}>Keep moving</button>
     {onExit && <button onClick={onExit}>End session</button>}
   </main>;
-  if (discovery === 'question') return <LearnScreen settings={settings} runtime={runtime}
+  if (discovery === 'fact') return <DiscoveryScreen settings={settings} runtime={runtime}
+    onSkip={() => finishDiscovery()} onContinue={item => {
+      discovered.current = item; setSessionDiscovery(item); finishDiscovery();
+    }} />;
+  if (discovery === 'recall') return <LearnScreen settings={settings} runtime={runtime} discoveryItem={sessionDiscovery}
     onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
   if (error) return <div className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">LET’S GET YOU CONNECTED</p><h1>Camera setup needs another try</h1>
     <p>Allow camera access in your browser and make sure the camera is available. Then try again. You have not lost any points.</p>
@@ -179,6 +201,7 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     <SimonCharacter expression={expression} />
     <h1 className="instruction">{prompt}</h1>
     <p role="status" aria-live="polite">{status}</p>
+    {sessionDiscovery && <><p>{roundNumber === 3 ? sessionDiscovery.movement.cue : ''}</p><DiscoverySource item={sessionDiscovery} movement={sessionDiscovery.movement} explain /></>}
     {countdown != null && <p aria-label="Seconds remaining">{countdown}s remaining</p>}
     <div className="play-controls" aria-label="Session controls">
       <button disabled={!canControl || repeatBusy} onClick={() => {

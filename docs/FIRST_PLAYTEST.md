@@ -20,9 +20,11 @@ Use this checklist for a real person and camera. The goal is to find where the c
 4. Intentionally move on one trick and confirm exactly one life is lost.
 5. Pause, repeat the instruction, resume, and confirm the active time was preserved.
 6. Skip one round and confirm no life is lost and the round is unscored.
-7. Accept discovery, answer or skip, view the source, and return to movement.
+7. Choose Animals and accept discovery after round 2. Confirm a fact and source appear, narration finishes, and **Let’s move** leads to a themed round 3 using a selected pose. Complete that move. After the movement rounds, answer the recall question about the same fact; confirm the source remains visible and a wrong answer costs no life.
 8. Finish or use all three lives; confirm movement and discovery results remain separate.
 9. Play again and confirm the camera reconnects.
+
+Also decline the midpoint offer and verify no `/api/tavily` request occurs. With search unavailable, confirm **Curated discovery** appears and the same fact → movement → recall loop finishes. Synthetic detector input verifies UI sequencing only; it does not establish real-camera recognition or live ElevenLabs playback.
 10. End the session and confirm the browser camera indicator turns off.
 
 Repeat the movement cases for left/right hand up, head, nose, shoulders, and arms out. Include crossed and uncrossed shoulder touches if comfortable.
