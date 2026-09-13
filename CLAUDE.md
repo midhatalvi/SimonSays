@@ -128,3 +128,6 @@ npm run build
 ```
 
 Deploy is automatic on push to main via Vercel.
+
+## Fair-play revision
+User-authorized cross-folder integration: detector adds `tracking: boolean` while preserving matched/confidence. The engine requires tracking explicitly, excludes interrupted rounds from timing, and needs a neutral pose before Go. `resetPoseHistory` and `stopVision` manage session boundaries. Gentle play replaces elimination; the score excludes skips/tracking timeouts. Real pose detection is connected. Tavily remains outside the active game.

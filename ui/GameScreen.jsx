@@ -1,234 +1,120 @@
-// /ui — Game screen: Simon roams the stage, calls Simon Says commands from a
-// speech bubble, and enforces the rules with 3 lives. (MIDHAT)
-import React, { useEffect, useRef, useState } from "react";
-import { buildRounds, judgeRound, reactionFor } from "../engine/gameEngine.js";
-import { checkPose, getVisionStatus } from "../vision/checkPose.js";
-import { POSE_NAMES } from "../shared/poses.js";
-import { say } from "../voice/elevenlabs.js";
-import SimonCharacter from "./SimonCharacter.jsx";
+import React, { useEffect, useRef, useState } from 'react';
+import { buildRounds, judgeRound, reactionFor } from '../engine/gameEngine.js';
+import { checkPose, getVisionStatus, resetPoseHistory, stopVision } from '../vision/checkPose.js';
+import { say, prepareSpeech, cancelSpeech } from '../voice/elevenlabs.js';
+import SimonCharacter from './SimonCharacter.jsx';
 
-const TOTAL_ROUNDS = 6;
-const LIVES = 3;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const labels = {
+  neutral: 'Relax your hands below your shoulders. Keep them in view.',
+  active: 'Go: follow the instruction only if Simon says.',
+  'tracking-lost': 'Camera cannot see the needed body points. Timer paused. Move back into view.',
+  paused: 'Paused. Take your time.',
+};
 
-export default function GameScreen({ onDone }) {
-  const [phase, setPhase] = useState("prep"); // prep | rules | playing | error
-  const [prompt, setPrompt] = useState("Turning on the camera...");
+export default function GameScreen({ onDone, settings }) {
+  const [prompt, setPrompt] = useState('Getting the camera ready…');
+  const [status, setStatus] = useState('Loading the movement detector…');
+  const [roundNumber, setRoundNumber] = useState(0);
   const [countdown, setCountdown] = useState(null);
-  const [result, setResult] = useState(null); // "good" | "bad" | null
-  const [roundNum, setRoundNum] = useState(0);
-  const [lives, setLives] = useState(LIVES);
-  const [expr, setExpr] = useState("happy");
-  const [pos, setPos] = useState({ x: 50, y: 58 });
-  const [walking, setWalking] = useState(false);
-  const startedRef = useRef(false);
+  const [paused, setPaused] = useState(false);
+  const [error, setError] = useState(false);
+  const [repeatBusy, setRepeatBusy] = useState(false);
+  const [canControl, setCanControl] = useState(false);
+  const pausedRef = useRef(false), activeController = useRef(null), session = useRef(null);
+  const command = useRef(''), doneRef = useRef(onDone), skip = useRef(false);
+  doneRef.current = onDone;
 
   useEffect(() => {
-    if (startedRef.current) return; // guard React StrictMode double-invoke
-    startedRef.current = true;
-    let cancelled = false;
-
-    const waitForVision = (timeoutMs) =>
-      new Promise((resolve) => {
-        const deadline = Date.now() + timeoutMs;
-        const step = () => {
-          if (cancelled) return;
-          checkPose(POSE_NAMES[0]);
-          const { status } = getVisionStatus();
-          if (status === "ready" || status === "error") return resolve(status);
-          if (Date.now() > deadline) return resolve("error");
-          setTimeout(step, 250);
-        };
-        step();
-      });
-
-    const randomSpot = () => ({
-      x: 35 + Math.random() * 30, // 35–65% keeps the bubble on screen (phones)
-      y: 50 + Math.random() * 18, // 50–68% keeps the bubble above him visible
-    });
-
-    // Speak the command while revealing the text word-by-word, so the on-screen
-    // text never gets ahead of the voice (no reading the action early).
-    const REVEAL_MS = 420;
-    const announce = async (round) => {
-      const words = round.promptText.split(" ");
-      setPrompt("");
-      const speakPromise = Promise.resolve(say(round.spokenText || round.promptText));
-      await wait(300); // let the voice start before the first word appears
-      const shown = [];
-      for (let k = 0; k < words.length; k++) {
-        if (cancelled) return;
-        shown.push(words[k]);
-        setPrompt(shown.join(" "));
-        await wait(REVEAL_MS);
+    const controller = new AbortController(); session.current = controller;
+    const signal = controller.signal;
+    let running = false;
+    // Defer startup so React's development remount cancels before requesting a camera.
+    const timer = setTimeout(async () => {
+      running = true;
+      const rounds = buildRounds(6, settings.seconds, settings.poses).map(r => ({ ...r, timeLimitSec: settings.seconds }));
+      const practice = { ...rounds[0], simonSays: true,
+        promptText: 'Simon says ' + rounds[0].promptText.replace(/^Simon says /, '').toLowerCase(),
+        timeLimitSec: Math.max(10, settings.seconds) };
+      practice.spokenText = practice.promptText;
+      void prepareSpeech(practice.spokenText);
+      checkPose(practice.targetPose);
+      const deadline = Date.now() + 25000;
+      while (!signal.aborted && getVisionStatus().status === 'loading' && Date.now() < deadline) await wait(100);
+      if (signal.aborted) return;
+      if (getVisionStatus().status !== 'ready') { setError(true); stopVision(); return; }
+      const results = [];
+      for (const [index, round] of [practice, ...rounds].entries()) {
+        if (signal.aborted) break;
+        while (pausedRef.current && !signal.aborted) await wait(100);
+        if (signal.aborted) break;
+        setRoundNumber(index); setCountdown(null);
+        command.current = round.spokenText || round.promptText;
+        setPrompt(round.promptText);
+        setStatus(index === 0 ? 'Practice — no score. Listen, relax your hands, then wait for Go.' : 'Listen, relax your hands, then wait for Go.');
+        const next = rounds[index];
+        if (next) void prepareSpeech(next.spokenText || next.promptText);
+        const positive = index === 0 ? 'Practice complete. Choose Skip whenever a move is uncomfortable.' : reactionFor(true, round.simonSays);
+        const negative = index === 0 ? 'Practice complete. We can try that again another time.' : reactionFor(false, round.simonSays);
+        const unscored = 'No score for this round. Let’s try another.';
+        void prepareSpeech(positive);
+        void prepareSpeech(negative);
+        void prepareSpeech(unscored);
+        await say(command.current, { signal });
+        if (signal.aborted) break;
+        const roundController = new AbortController(); activeController.current = roundController;
+        const abortRound = () => roundController.abort();
+        signal.addEventListener('abort', abortRound, { once: true });
+        skip.current = false; setCanControl(true);
+        const result = await judgeRound(round, checkPose, setCountdown, {
+          signal: roundController.signal, isPaused: () => pausedRef.current,
+          reset: resetPoseHistory, onState: state => setStatus(labels[state]),
+        });
+        signal.removeEventListener('abort', abortRound);
+        setCanControl(false); setCountdown(null);
+        if (signal.aborted) break;
+        if (skip.current) result.reason = 'skipped';
+        if (index > 0) results.push(result);
+        const feedback = result.passed == null ? unscored : result.passed ? positive : negative;
+        setStatus(feedback);
+        await say(feedback, { signal });
       }
-      await speakPromise;
-      if (!cancelled) setPrompt(round.promptText);
-    };
-
-    (async () => {
-      // 1) Camera + model.
-      setPhase("prep");
-      setExpr("happy");
-      setPrompt("Turning on the camera...");
-      const status = await waitForVision(20000);
-      if (cancelled) return;
-      if (status === "error") {
-        setPhase("error");
-        return;
+      if (!signal.aborted) {
+        stopVision();
+        const scored = results.filter(r => r.passed != null);
+        doneRef.current({ score: scored.filter(r => r.passed).length, total: scored.length,
+          roundsPlayed: results.length, eliminated: false, reactions: [],
+          unscored: results.length - scored.length });
       }
-
-      // 2) Teach the rules.
-      setPhase("rules");
-      setExpr("ready");
-      await say(
-        "Here's how we play. When I say Simon says before a move, do it! " +
-          "But if I don't say Simon says, don't move — just show me your hands. " +
-          "Move on a fake one, or miss a real one, and you lose a life. " +
-          "You have three lives. Ready?"
-      );
-      await wait(700);
-
-      // 3) Countdown.
-      setPhase("playing");
-      setExpr("happy");
-      for (const n of [3, 2, 1]) {
-        if (cancelled) return;
-        setPrompt("Get ready...");
-        setCountdown(n);
-        await say(String(n));
-        await wait(400);
-      }
-      setCountdown(null);
-
-      // 4) Play — Simon roams; 3 lives; out when they run out.
-      const rounds = buildRounds(TOTAL_ROUNDS);
-      let score = 0;
-      let livesLeft = LIVES;
-      const reactions = []; // ms to perform, correct "Simon says" rounds only
-      let i = 0;
-      for (; i < rounds.length; i++) {
-        if (cancelled) return;
-        const round = rounds[i];
-        setResult(null);
-        setExpr("happy");
-
-        // Waddle to a new spot (bubble hidden while walking).
-        setWalking(true);
-        setPos(randomSpot());
-        await wait(950);
-        if (cancelled) return;
-        setWalking(false);
-
-        setRoundNum(i + 1);
-
-        // Announce: reveal the command in time with the voice.
-        await announce(round);
-        if (cancelled) return;
-
-        const { passed, reactionMs } = await judgeRound(
-          round,
-          checkPose,
-          (secLeft) => !cancelled && setCountdown(secLeft)
-        );
-        if (cancelled) return;
-
-        setCountdown(null);
-        if (passed) {
-          score++;
-          if (reactionMs != null) reactions.push(reactionMs);
-          setResult("good");
-          setExpr("cheer");
-        } else {
-          livesLeft--;
-          setLives(livesLeft);
-          setResult("bad");
-          setExpr("oops");
-        }
-        await say(reactionFor(passed, round.simonSays));
-        await wait(800);
-
-        if (livesLeft <= 0) {
-          if (!cancelled) await say("Oh no, that's all your lives! Great playing.");
-          break;
-        }
-      }
-
-      const roundsPlayed = Math.min(i + 1, rounds.length);
-      if (!cancelled) {
-        onDone({ score, total: rounds.length, eliminated: livesLeft <= 0, roundsPlayed, reactions });
-      }
-    })();
-
+    }, 0);
     return () => {
-      cancelled = true;
+      clearTimeout(timer); controller.abort(); activeController.current?.abort(); cancelSpeech();
+      if (running) stopVision();
     };
-  }, [onDone]);
+  }, [settings]);
 
-  if (phase === "error") {
-    return (
-      <div className="screen">
-        <SimonCharacter expression="oops" />
-        <p className="subtitle">
-          I'll need your camera to play. Please allow camera access, then tap below.
-        </p>
-        <button className="big-btn" onClick={() => window.location.reload()}>
-          Try again
-        </button>
-      </div>
-    );
+  async function repeat() {
+    pausedRef.current = true; setPaused(true); setRepeatBusy(true);
+    await say(command.current, { signal: session.current?.signal });
+    if (!session.current?.signal.aborted) setRepeatBusy(false);
   }
-
-  const hearts = [];
-  for (let i = 0; i < LIVES; i++) hearts.push(i < lives ? "❤️" : "🤍");
-
-  return (
-    <div className="game-roam">
-      <div className="hud">
-        <div className="hud-pill">
-          {phase === "prep" ? "Getting ready" :
-           phase === "rules" ? "How to play" :
-           `Round ${roundNum || "–"} of ${TOTAL_ROUNDS}`}
-        </div>
-        {phase === "playing" && (
-          <div className="hearts" aria-label={`${lives} lives left`}>
-            {hearts.map((h, idx) => (
-              <span key={idx} className="heart">{h}</span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="simon-wrap" style={{ left: pos.x + "%", top: pos.y + "%" }}>
-        {!walking && (
-          <div className="speech">
-            {phase === "rules" ? (
-              <ul className="rules-list">
-                <li><b>"Simon says…"</b> → do the move!</li>
-                <li><b>No "Simon says"</b> → stay still, show your hands</li>
-                <li><b>❤️ 3 lives</b> — a slip costs one</li>
-              </ul>
-            ) : countdown != null ? (
-              <span className="countdown">{countdown}</span>
-            ) : (
-              <span
-                className={
-                  "speech-cmd " +
-                  (result === "good" ? "result-good" : result === "bad" ? "result-bad" : "")
-                }
-              >
-                {prompt}
-              </span>
-            )}
-            {result === "good" && <span className="feedback good">✓ Lovely!</span>}
-            {result === "bad" && <span className="feedback bad">Careful! 💛</span>}
-          </div>
-        )}
-        <SimonCharacter expression={expr} walking={walking} />
-      </div>
+  if (error) return <div className="screen"><h1>Camera setup needs another try</h1>
+    <p>Check camera permission and your connection, then reload. You have not lost any points.</p>
+    <button className="big-btn" onClick={() => window.location.reload()}>Try again</button></div>;
+  return <div className="screen fair-game">
+    <p>{roundNumber === 0 ? 'Practice' : `Round ${roundNumber} of 6`}</p>
+    <SimonCharacter expression="happy" />
+    <h1 className="instruction">{prompt}</h1>
+    <p role="status" aria-live="polite">{status}</p>
+    {countdown != null && <p aria-label="Seconds remaining">{countdown}s remaining</p>}
+    <div className="play-controls">
+      <button disabled={!canControl || repeatBusy} onClick={() => {
+        pausedRef.current = !pausedRef.current; setPaused(pausedRef.current);
+      }}>{paused ? 'Resume' : 'Pause'}</button>
+      <button disabled={!canControl || repeatBusy} onClick={repeat}>Repeat instruction</button>
+      <button disabled={!canControl || repeatBusy} onClick={() => {
+        pausedRef.current = false; setPaused(false); skip.current = true; activeController.current?.abort();
+      }}>Skip — no penalty</button>
     </div>
-  );
-}
-
-function wait(ms) {
-  return new Promise((r) => setTimeout(r, ms));
+  </div>;
 }

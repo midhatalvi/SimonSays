@@ -1,51 +1,27 @@
-# Simon Says (simonsays)
+# Simon Says — fair play and prepared voice
 
-Camera-based cognitive + movement game to help elderly users stay sharp. A
-friendly voice calls out actions, you perform them in front of your camera, the
-app scores you live and reacts. Built at LOCK IN Hack. Sponsor APIs: ElevenLabs
-(voice) + Tavily (live content).
+A camera-based movement game with practice, comfortable-movement selection, adjustable timing, and optional spoken instructions. Sit or stand; choose only movements that feel comfortable. This is a prototype for engagement, not a clinical assessment or treatment.
 
-See **CLAUDE.md** for the full spec, shared contracts, and folder ownership.
+## Run
 
-## Quickstart
+Node.js 20+ recommended. Run `npm ci`, then `npm run dev`. Open the localhost URL; remote devices require HTTPS for camera access. Run `npm test` for synthetic interaction cases and `npm run build` for production assets.
 
-```bash
-npm install
-npm run dev      # camera works on localhost; open the Network URL on a phone
-```
+Deploy to Vercel to use the `/api` handlers. The Vite-only preview does not serve the voice API: it uses browser speech fallback. Configure `ELEVENLABS_API_KEY` and optionally `ELEVENLABS_VOICE_ID` server-side for ElevenLabs. No microphone permission is needed. Pose processing stays in the browser; voice prompt text goes to the voice service.
 
-The app runs end-to-end right now with a **fake detector** (random pass/fail)
-and **browser speech** fallback — no API keys needed to see the loop.
+## Implemented
 
-## Folder ownership
+- Real MediaPipe pose detection, including shoulder-width normalization.
+- Detector returns explicit tracking validity. Missing/stale landmarks cannot score as stillness.
+- After the instruction finishes, return to a neutral pose; the visible Go state opens scoring. Movement during the instruction is not scored. The full instruction remains visible.
+- Tracking loss and manual pause freeze the response window and require neutral readiness on return. Tracking loss lasting 15 seconds leaves the round unscored.
+- Practice, selected movements, 5/8/12-second response windows, pause, repeat (remains paused until Resume), and skip without penalty.
+- Gentle six-round session; no elimination. Skips and tracking timeouts are excluded from the denominator. Response-time metrics are not presented as cognitive measurements.
+- Next command audio prefetch, bounded in-flight deduplication/cache, timeout, browser speech fallback, URL cleanup, and camera teardown.
 
-| Folder                | Owner    | What                               |
-| --------------------- | -------- | ---------------------------------- |
-| `/shared`             | both 🔒  | pose names + interfaces (LOCKED)   |
-| `/vision`             | teammate | MediaPipe + real `checkPose`       |
-| `/content`            | teammate | Tavily round generation            |
-| `/server/tavily`      | teammate | Tavily proxy                       |
-| `/engine`             | Midhat   | game state machine + rounds        |
-| `/voice`              | Midhat   | ElevenLabs client                  |
-| `/ui`                 | Midhat   | Start / Game / Score screens       |
-| `/server/elevenlabs`  | Midhat   | ElevenLabs proxy                   |
-| `/api`                | both     | thin Vercel wrappers → `/server/*` |
+## Scope and evidence
 
-Don't edit the other person's folders. Don't change `/shared` without agreeing
-first (then update CLAUDE.md in the same commit).
+Tavily code remains present but is not connected to the active game. No latency, adoption, health, accessibility-compliance, or sponsor-prize claims have been validated. See [revised plan](docs/REVISED_PLAN.md) and [evidence cases](docs/EVIDENCE_CASES.md). These distinguish source inspection, executable synthetic cases, browser checks, and pending participant observations.
 
-## Integration points (one-line swaps)
+## Review
 
-- Real detector: in `ui/GameScreen.jsx`, change
-  `import { checkPose } from "../engine/fakeCheckPose.js"` →
-  `"../vision/checkPose.js"`.
-- Real voice: set `ELEVENLABS_API_KEY` (+ optional `ELEVENLABS_VOICE_ID`) in
-  Vercel; the client auto-uses `/api/elevenlabs`, else falls back to browser TTS.
-
-## Env
-
-Copy `.env.example` → `.env` for local API testing; set the same keys in Vercel.
-
-## Deploy
-
-Auto-deploys on push to `main` via Vercel (HTTPS URL for phone testing).
+Changes are on local branch `improve/fair-play-audio`. Public deployment is unchanged. Existing dependency audit findings require separate review before production use.

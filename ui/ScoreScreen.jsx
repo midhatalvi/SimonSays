@@ -11,6 +11,7 @@ function warmNote(score, total) {
 }
 
 export default function ScoreScreen({
+  unscored = 0,
   score,
   total,
   eliminated,
@@ -41,8 +42,9 @@ export default function ScoreScreen({
       <Robot expression="cheer">
         <h1 className="belly-title">{eliminated ? "Good game!" : "All done!"}</h1>
         <div className="big-num">
-          {score}/{total}
+          {total ? `${score}/${total}` : "Session complete"}
         </div>
+        <p>{unscored} rounds skipped or not scored. Camera interruptions never count against you.</p>
         {avgSec != null && (
           <div className="metrics">
             <span className="metric">⏱ Avg {avgSec.toFixed(1)}s</span>

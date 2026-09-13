@@ -47,10 +47,10 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
  * (for the voice).
  * @returns {import("../shared/poses.js").Round[]}
  */
-export function buildRounds(count = 6, timeLimitSec = 5) {
+export function buildRounds(count = 6, timeLimitSec = 5, poses = ACTIVE_POSES) {
   const rounds = [];
   for (let i = 0; i < count; i++) {
-    const targetPose = pick(ACTIVE_POSES);
+    const targetPose = pick(poses);
     const simonSays = Math.random() < SIMON_SAYS_CHANCE;
     const action = FRIENDLY[targetPose] || targetPose;
     const lead = pick(LEADINS);
@@ -93,31 +93,49 @@ export function reactionFor(passed, simonSays = true) {
  * @param {(target:string)=>{matched:boolean,confidence:number}} checkPose
  * @param {(secLeft:number)=>void} [onTick]
  */
-export async function judgeRound(round, checkPose, onTick) {
-  if (round.type !== "movement" || !round.targetPose) {
-    return { passed: true, reactionMs: null };
-  }
-
-  const t0 = Date.now();
-  const deadline = t0 + round.timeLimitSec * 1000;
-
-  return new Promise((resolve) => {
-    const tick = () => {
-      const msLeft = deadline - Date.now();
-      if (onTick) onTick(Math.max(0, Math.ceil(msLeft / 1000)));
-
-      const { matched, confidence } = checkPose(round.targetPose);
-
-      if (round.simonSays) {
-        if (matched) return resolve({ passed: true, reactionMs: Date.now() - t0 });
-        if (msLeft <= 0) return resolve({ passed: false, reactionMs: null });
-      } else {
-        // Trick: any real attempt at the pose is a miss.
-        if (confidence >= FAKE_MOVE_THRESHOLD) return resolve({ passed: false, reactionMs: null });
-        if (msLeft <= 0) return resolve({ passed: true, reactionMs: null });
+export async function judgeRound(round, checkPose, onTick, options = {}) {
+  const { signal, isPaused = () => false, onState = () => {},
+    now = () => performance.now(), sleep = ms => new Promise(r => setTimeout(r, ms)),
+    reset = () => {}, maxTrackingWaitMs = 15000 } = options;
+  let activeMs = 0, previous = now(), neutralMs = 0, neutral = false;
+  let lostMs = 0, interrupted = false, previousValid = false;
+  reset();
+  while (!signal?.aborted) {
+    const time = now(), delta = Math.min(250, time - previous);
+    previous = time;
+    if (isPaused()) {
+      onState("paused"); interrupted = true; neutral = false; neutralMs = 0;
+      previousValid = false; reset();
+      await sleep(100); continue;
+    }
+    const pose = checkPose(round.targetPose);
+    if (pose.tracking !== true) {
+      lostMs += delta; interrupted = true; neutral = false; neutralMs = 0;
+      previousValid = false; reset(); onState("tracking-lost");
+      if (lostMs >= maxTrackingWaitMs) return { passed: null, reactionMs: null, reason: "tracking-timeout" };
+      await sleep(100); continue;
+    }
+    lostMs = 0;
+    if (!neutral) {
+      onState("neutral");
+      neutralMs = pose.confidence < 0.25 ? neutralMs + (previousValid ? delta : 0) : 0;
+      previousValid = true;
+      if (neutralMs >= 400) {
+        neutral = true; reset(); previousValid = false;
       }
-      setTimeout(tick, 200);
-    };
-    tick();
-  });
+      await sleep(100); continue;
+    }
+    onState("active");
+    if (previousValid) activeMs += delta;
+    previousValid = true;
+    onTick?.(Math.max(0, Math.ceil(round.timeLimitSec - activeMs / 1000)));
+    if (round.simonSays && pose.matched)
+      return { passed: true, reactionMs: interrupted ? null : activeMs, reason: "matched" };
+    if (!round.simonSays && pose.confidence >= FAKE_MOVE_THRESHOLD)
+      return { passed: false, reactionMs: null, reason: "trick-move" };
+    if (activeMs >= round.timeLimitSec * 1000)
+      return { passed: !round.simonSays, reactionMs: null, reason: "window-ended" };
+    await sleep(100);
+  }
+  return { passed: null, reactionMs: null, reason: "cancelled" };
 }

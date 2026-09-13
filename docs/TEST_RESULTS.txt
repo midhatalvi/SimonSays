@@ -1,0 +1,93 @@
+
+> simonsays@0.0.1 test
+> node --test tests/*.test.js
+
+TAP version 13
+# Subtest: missing tracking cannot pass a trick round
+ok 1 - missing tracking cannot pass a trick round
+  ---
+  duration_ms: 0.457292
+  type: 'test'
+  ...
+# Subtest: loss of tracking cannot fail a movement round
+ok 2 - loss of tracking cannot fail a movement round
+  ---
+  duration_ms: 0.200959
+  type: 'test'
+  ...
+# Subtest: held-over pose must return to neutral before it can score
+ok 3 - held-over pose must return to neutral before it can score
+  ---
+  duration_ms: 0.108667
+  type: 'test'
+  ...
+# Subtest: visible still player passes full trick window
+ok 4 - visible still player passes full trick window
+  ---
+  duration_ms: 0.067875
+  type: 'test'
+  ...
+# Subtest: moving on trick fails after neutral readiness
+ok 5 - moving on trick fails after neutral readiness
+  ---
+  duration_ms: 0.118333
+  type: 'test'
+  ...
+# Subtest: tracking recovery requires neutral and excludes timing metric
+ok 6 - tracking recovery requires neutral and excludes timing metric
+  ---
+  duration_ms: 0.056209
+  type: 'test'
+  ...
+# Subtest: pause consumes no response-window time
+ok 7 - pause consumes no response-window time
+  ---
+  duration_ms: 0.139
+  type: 'test'
+  ...
+# Subtest: abort ends round without score
+ok 8 - abort ends round without score
+  ---
+  duration_ms: 0.085833
+  type: 'test'
+  ...
+# Subtest: preloading and playback share one request
+ok 9 - preloading and playback share one request
+  ---
+  duration_ms: 0.634
+  type: 'test'
+  ...
+# Subtest: temporary speech failure is retryable
+ok 10 - temporary speech failure is retryable
+  ---
+  duration_ms: 0.182416
+  type: 'test'
+  ...
+# Subtest: speech request timeout releases caller for fallback
+ok 11 - speech request timeout releases caller for fallback
+  ---
+  duration_ms: 11.596625
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 43.54775
+
+> simonsays@0.0.1 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.80 kB │ gzip:  0.43 kB
+dist/assets/index-BYbr6fdN.css   10.27 kB │ gzip:  2.92 kB
+dist/assets/index-KyqTcGv_.js   288.71 kB │ gzip: 91.76 kB
+✓ built in 399ms

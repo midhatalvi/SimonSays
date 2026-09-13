@@ -6,13 +6,14 @@ import ScoreScreen from "../ui/ScoreScreen.jsx";
 
 export default function App() {
   const [phase, setPhase] = useState("start"); // start | game | score
+  const [settings, setSettings] = useState(null);
   const [result, setResult] = useState({ score: 0, total: 0 });
 
-  if (phase === "start") return <StartScreen onStart={() => setPhase("game")} />;
+  if (phase === "start") return <StartScreen onStart={(chosen) => { setSettings(chosen); setPhase("game"); }} />;
 
   if (phase === "game")
     return (
-      <GameScreen
+      <GameScreen settings={settings}
         onDone={(r) => {
           setResult(r);
           setPhase("score");
