@@ -3,7 +3,8 @@ import { buildRounds, judgeRound, reactionFor } from '../engine/gameEngine.js';
 import { checkPose, getVisionStatus, resetPoseHistory, stopVision } from '../vision/checkPose.js';
 import { say, prepareSpeech, cancelSpeech } from '../voice/elevenlabs.js';
 import LearnScreen from './LearnScreen.jsx';
-import { getLearningQuestions } from '../content/tavilyRounds.js';
+import { getLearningQuestions, getDiscovery } from '../content/tavilyRounds.js';
+import { discoveryMovement } from '../content/discovery.js';
 import SimonCharacter from './SimonCharacter.jsx';
 import { STARTING_LIVES, summarizeSession } from '../engine/sessionScore.js';
 import DiscoveryScreen from './DiscoveryScreen.jsx';
@@ -22,6 +23,7 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
   const { checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech } = runtime;
   const [discovery, setDiscovery] = useState(null);
   const [sessionDiscovery, setSessionDiscovery] = useState(null);
+  const [startFact, setStartFact] = useState(null);
   const discovered = useRef(null);
   const discoveryChoice = useRef(null), discoveryResult = useRef(null);
   const [prompt, setPrompt] = useState('Getting the camera ready…');
@@ -59,6 +61,20 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
       if (signal.aborted) return;
       if (getVisionStatus().status !== 'ready') { setError(true); stopVision(); return; }
       setCameraReady(true);
+      // Start-of-game discovery: teach one fact now, then check recall at the break.
+      if (settings.discovery && !signal.aborted) {
+        try {
+          const found = await getDiscovery(settings.topic, signal);
+          const item = { ...found, movement: discoveryMovement(found, settings.poses, settings.seconds) || null };
+          discovered.current = item; setSessionDiscovery(item); setStartFact(item);
+          setDiscovery('startfact');
+          await say(`Before we begin, a little discovery. ${found.fact} Try to remember it. I'll ask you about it soon.`, { signal });
+          if (signal.aborted) return;
+          await wait(5000);
+          if (signal.aborted) return;
+          setDiscovery(null);
+        } catch { setDiscovery(null); }
+      }
       setPrompt('Let’s stay sharp together.');
       setStatus('“Simon says…”: do the move. Otherwise, stay still. You have 3 lives; a slip costs one.');
       await say('When I say Simon says, do the move. Otherwise, stay still and keep your hands in view. You have three lives. A slip costs one. Let’s stay sharp together.', { signal });
@@ -121,10 +137,10 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
         setStatus(result.passed === false ? `${feedback} ${summary.lives} ${summary.lives === 1 ? 'life' : 'lives'} left.` : feedback);
         await say(feedback, { signal });
         if (summary.eliminated) break;
-        if (index === 1 && settings.discovery && !signal.aborted) {
+        if (index === 1 && settings.discovery && discovered.current && !signal.aborted) {
           stopVision(); setCameraReady(false);
           discoveryChoice.current = null;
-          setDiscovery('learn'); // ask the question directly, hands-free
+          setDiscovery('recall'); // memory check on the start-of-game fact
           while (!discoveryChoice.current && !signal.aborted) await wait(100);
           if (signal.aborted) break;
           setDiscovery(null);
@@ -145,12 +161,7 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
       }
       if (!signal.aborted) {
         stopVision();
-        if (discovered.current) {
-          discoveryChoice.current = null;
-          setDiscovery('recall');
-          while (!discoveryChoice.current && !signal.aborted) await wait(100);
-        }
-        if (!signal.aborted) doneRef.current({ ...summarizeSession(results), discovery: discoveryResult.current });
+        doneRef.current({ ...summarizeSession(results), discovery: discoveryResult.current });
       }
     }, 0);
     return () => {
@@ -172,13 +183,6 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
         answered: previous.answered + (summary?.answered || 0),
         items: [...previous.items, discovered.current], item: discovered.current,
       };
-    } else if (discovery === 'learn' && summary) {
-      const previous = discoveryResult.current || { correct: 0, answered: 0, items: [] };
-      discoveryResult.current = {
-        ...previous,
-        correct: previous.correct + (summary.correct || 0),
-        answered: previous.answered + (summary.answered || 0),
-      };
     }
     setDiscovery(null); discoveryChoice.current = 'continue';
   }
@@ -194,8 +198,14 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     onSkip={() => finishDiscovery()} onContinue={item => {
       discovered.current = item; setSessionDiscovery(item); finishDiscovery();
     }} />;
-  if (discovery === 'learn') return <LearnScreen settings={settings} runtime={runtime}
-    onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
+  if (discovery === 'startfact') return <main className="screen learn-screen">
+    <div className="discovery-modal-backdrop"><div className="discovery-modal" role="dialog" aria-live="polite">
+      <p className="modal-verdict">A little discovery</p>
+      <blockquote>{startFact?.fact}</blockquote>
+      {startFact && <DiscoverySource item={startFact} movement={startFact.movement} />}
+      <p className="auto-advance-note">Starting in a few seconds…</p>
+    </div></div>
+  </main>;
   if (discovery === 'recall') return <LearnScreen settings={settings} runtime={runtime} discoveryItem={sessionDiscovery}
     onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
   if (error) return <div className="screen camera-error"><SimonCharacter expression="oops"/><p className="eyebrow">LET’S GET YOU CONNECTED</p><h1>Camera setup needs another try</h1>
