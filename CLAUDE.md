@@ -1,40 +1,42 @@
-# CLAUDE.md — Simon Says
+# Agent guidance — Simon Says
 
-Repo: `midhatalvi/SimonSays`. Product name shown to users: **Simon Says**.
+Repository: `midhatalvi/SimonSays`. User-facing product name: **Simon Says**.
 
-## What we're building
+## Read first
 
-Simon Says is a **camera-based cognitive + movement game to help elderly users stay sharp**. It's a Simon-Says-style game: a friendly voice host calls out actions, the user performs them in front of their device camera, the app scores their movements live, and the voice reacts. At the end it shows a score and a spoken recap.
+- [README](README.md): product introduction and documentation routes.
+- [Contributing](CONTRIBUTING.md): folder ownership and collaboration rules.
+- [Developer guide](docs/development.md): setup and verification.
+- [Architecture](docs/architecture.md): current runtime behavior.
+- [Shared contracts](shared/README.md): interface reference.
 
-Built at a weekend hackathon (LOCK IN Hack). Sponsor APIs we're using: **ElevenLabs** (voice) and **Tavily** (live web content). Using both is worth extra prizes.
+## Rules for changes
 
-**Not a medical product.** Frame everything as "engagement" and "staying sharp," never treatment or clinical claims.
+- Respect folder ownership. Do not refactor another person's folders while working on your assigned area.
+- `shared/` is co-owned and locked. Obtain explicit agreement before changing shared contracts, then update this file in the same commit.
+- Keep Vite, React, and plain JavaScript unless there is a reason to change. Ask before introducing dependencies or frameworks.
+- Keep vision in the browser. Do not introduce a Python vision backend.
+- Keep ElevenLabs and Tavily keys server-side behind the existing proxies.
+- Prefer readable, focused code appropriate to a hackathon prototype.
+- Preserve the older-adult-oriented design goals: large text, high contrast, one primary action per screen.
+- Verify camera behavior on laptops and phones; phone camera testing requires HTTPS.
+- Describe movement and engagement, not treatment or clinical benefits.
 
-## Tech stack (do not change without a reason)
+## Current main integration state
 
-- **Frontend:** Vite + React, plain JavaScript.
-- **Vision:** `@mediapipe/tasks-vision` (Pose Landmarker) running **in the browser, on-device**. No Python vision backend — it adds latency and a failure point on a live demo.
-- **Camera:** browser `getUserMedia`. Requires HTTPS (localhost is exempt).
-- **Voice:** ElevenLabs text-to-speech, called through our own backend proxy so the API key stays server-side.
-- **Live content:** Tavily search API, called through the backend, turned into trivia/reminiscence rounds.
-- **Backend:** minimal Node serverless functions (proxies only — no heavy logic).
-- **Deploy:** Vercel. Every push gets an HTTPS URL we can open on a phone.
+Main remains at application revision `c4dfe4f`: real detection and six active poses, three lives, no practice/recovery controls, and Tavily outside gameplay. The documentation published here also describes a newer review branch; do not infer those changes exist in this checkout. Inspect the current source before editing.
 
-## Architecture
+## Review branch integration state
 
-The core is a **real-time game loop**:
+Review commit `814f65c` adds user-authorized cross-folder integration: tracking validity, neutral readiness, practice, comfortable movement/timing selection, recovery controls, prepared speech, and no-elimination scoring. An optional Tavily discovery break after three rounds resumes the same movement session and keeps A/B results separate. It replaces the earlier separate public learning entry; the isolated screen remains in the development harness.
 
-1. Engine picks a round and issues a command.
-2. ElevenLabs speaks the command.
-3. MediaPipe reads the camera; the detector checks whether the user's pose matches.
-4. Engine scores pass/fail within a time window.
-5. Voice reacts; score updates; next round.
+## Shared contract change record
 
-Vision runs client-side. The backend only proxies ElevenLabs and Tavily.
+The upstream review revision adds `tracking: boolean` to the detector result and requires it in the engine, plus `resetPoseHistory` and `stopVision` lifecycle helpers. Shared JSDoc has not caught up. This documentation edit changes no executable interfaces. See [shared contracts](shared/README.md) for current behavior.
 
-## Shared contracts — DO NOT change these casually
+## Original hackathon priorities
 
-These are the interfaces both halves of the team build against. Changing one breaks the other person's code. Change only after explicit agreement, then update this file in the same commit.
+The original 24-hour plan was: establish the frontend and camera, build engine and vision independently against shared contracts, integrate the detector, add content and UI polish, test on phones, then freeze and rehearse. The minimum demo was camera-based Simon Says, spoken commands and reactions, and a score. Tavily content and a caregiver summary were optional extensions.
 
 ### Pose names (fixed set)
 
@@ -138,3 +140,5 @@ User-authorized next feature: separate learning mode uses `content/learningQuest
 ## Integrated discovery revision — 2026-09-13
 
 One “Play with Simon” entry keeps older adults and comfortable movement central. An optional offer after three of six movement rounds leads to one sourced question, with explicit question rules, gesture practice or buttons, expandable evidence, and return to the preserved movement session. Discovery feedback never alters movement scoring. Search failures are recoverable without ending the session. This supersedes the separate public Learn & Move entry; the isolated screen remains available in the development verification harness. No clinical benefit or user-study outcome is claimed.
+
+Use these as historical context, not as evidence that all testing or extensions were completed.

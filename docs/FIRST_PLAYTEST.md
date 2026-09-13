@@ -1,10 +1,13 @@
 # First observed playtest
 
+> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
+
+[Home](../README.md) · [Developer guide](development.md) · [Project story](project-story.md)
 Status: READY TO RUN — no participant results collected.
 
 ## This laptop
 
-Open the local preview at http://127.0.0.1:5184/ while its development server is running. Choose only comfortable movements. Start with Relaxed (12 seconds). The player should press Start practice and respond to the browser's camera prompt themselves. No microphone access is needed.
+Run the development server and open the localhost URL it prints (normally http://localhost:5174/). Choose only comfortable movements. Start with Relaxed (12 seconds). The player should press Play with Simon and respond to the browser's camera prompt themselves. No microphone access is needed.
 
 This local Vite preview uses browser speech fallback because it does not serve the ElevenLabs API. It does not validate live ElevenLabs latency. To validate ElevenLabs, use an HTTPS deployment of this branch with the server-side key configured; the existing public demo has not been updated.
 

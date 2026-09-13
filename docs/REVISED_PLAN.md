@@ -1,5 +1,8 @@
 # Revised implementation and audience plan
 
+> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
+
+[Home](../README.md) · [Developer guide](development.md) · [Project story](project-story.md)
 ## Decision
 
 Finish fair, recoverable play and prepared speech before adding live-content mechanics or broader commercial claims. The current implementation serves one shared interaction: choose comfortable movements, practice, listen/read, return to neutral, wait for Go, play, and recover without penalty.
