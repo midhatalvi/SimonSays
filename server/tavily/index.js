@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const topic = req.body?.topic;
   if (!Object.hasOwn(TOPICS, topic)) return res.status(400).json({ error: 'Choose Space or Animals.' });
-  const key = process.env.TAVILY_API_KEY;
+  const key = process.env.TAVILY_API_KEY?.trim();
   if (!key) return res.status(503).json({ error: 'Discovery search is not configured. You can return to movement.' });
   try {
     // One question is shown per break. Search the second template only when needed.
