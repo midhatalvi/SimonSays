@@ -1,53 +1,54 @@
 # Player guide
 
-> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
+[Documentation](README.md) · [Why Simon Says exists](project-story.md) · [Troubleshooting](#camera-and-troubleshooting)
 
-[Home](../README.md) · [Project story](project-story.md)
+## Before you begin
 
-This guide describes the updated review build listed in the README. An older deployed version may show different controls.
+Use a device with a camera and enough room to move your hands comfortably. Sit or stand. Keep your head, shoulders, and hands visible, and stop any movement that feels uncomfortable. The game never needs microphone access.
 
-## Set up comfortably
+## Set up your game
 
-Open the updated app link supplied by the team. Use a camera-equipped device, allow camera permission, and keep your head, shoulders, and hands visible. Sit or stand comfortably and choose only movements that feel comfortable. Internet access is needed to load the movement model. No microphone is needed.
+1. Select at least one comfortable movement.
+2. Choose a pace: **Relaxed — 12 seconds**, **Comfortable — 8 seconds**, or **Quick — 5 seconds**.
+3. Leave discovery on for an optional Space or Animals question after round three, or switch it off.
+4. Choose gesture or button answers for discovery.
+5. Select **Play with Simon** and allow camera access.
 
-1. Select your movements. At least one must be selected.
-2. Choose **Relaxed — 12 seconds**, **Comfortable — 8 seconds**, or **Quick — 5 seconds**. Comfortable is the default; trick rounds use three seconds.
-3. Keep or turn off the optional discovery break. If enabled, choose Space or Animals and gesture or button answers.
-4. Select **Play with Simon** and allow the camera.
+## Rules
 
-## Practice, then play
+You begin with three lives and play up to six rounds:
 
-Practice is unscored. Try **Practice again** as needed, then select **I’m ready — start game**.
+- If Simon says “Simon says…,” perform the movement.
+- If the instruction does not begin with those words, stay still.
+- A missed instruction or moving on a trick costs one life.
+- The session ends after six rounds or when all three lives are used.
 
-Read or listen to each complete instruction. Relax your hands and wait for **Go** before responding. When Simon says “Simon says,” do the movement. Without those words, avoid the requested movement.
+Relax the requested hand or hands between rounds. Simon reveals the next instruction after confirming the ready position. Hold a requested movement briefly so the camera can confirm it.
 
-There are six movement rounds and no elimination. You can finish at your own pace:
+## Controls
 
-| Control or event | What happens |
+| Control | Result |
 | --- | --- |
-| Pause | Freezes the response timer |
-| Repeat instruction | Repeats the prompt and stays paused; select Resume when ready |
-| Skip — no penalty | Leaves the round unscored |
-| Camera loses needed body points | Pauses judging; return into view and relax before Go |
-| Tracking remains unavailable for 15 seconds | Leaves the round unscored |
-| End session / change movements | Returns to setup |
+| Pause | Suspends judging until Resume is selected |
+| Repeat instruction | Repeats the current prompt |
+| Skip — no penalty | Leaves the round unscored and preserves lives |
+| End session / change movements | Turns off the camera and returns to setup |
 
-## Optional discovery break
+If the required body points cannot be tracked or readiness cannot be confirmed for ten seconds, the session ends without taking another life and the camera is released.
 
-After three movement rounds, select **Explore one fact** or **Keep moving**. Search begins only if you accept.
+## Discovery break
 
-The question has different rules: choose A or B, with no Simon says tricks and no answer deadline. Gesture mode first practices two answer movements without scoring. Button mode bypasses gesture practice, and **Use answer buttons instead** is available as a fallback. Selecting only one movement uses buttons automatically.
+After round three, choose **Explore one fact** or **Keep moving**. Search begins only after the player accepts.
 
-After answering, read or hear the explanation. **Explore this fact** reveals an excerpt and source link. Return to movement to continue round four. If search fails, return to the same session; there is no offline question fallback.
+Discovery has no Simon Says tricks and no time limit. Choose A or B with the selected gestures or buttons. The answer includes a source excerpt and link. Discovery results appear separately and do not change movement lives or score. If search is unavailable, return to movement.
 
-## Results
+## Camera and troubleshooting
 
-Your movement score is out of scored rounds, excluding skips and tracking timeouts. If all rounds are unscored, the screen says **Session complete**. Discovery results appear separately and do not change movement scoring. Average and best response times may appear for successful, uninterrupted movement rounds; they include recognition time and are game statistics, not health measurements.
+- Keep the room evenly lit and avoid a bright window behind you.
+- Move far enough back for both shoulders and the active hands to remain visible.
+- Lower the requested hands between rounds; they can remain inside the frame.
+- Follow the on-screen tracking hint if it names a missing hand, shoulder, or face point.
+- If the camera is unavailable, close other apps using it and retry.
+- Phone camera access requires an HTTPS link; a laptop’s localhost URL will not work on the phone.
 
-Select **Play again** to return to setup.
-
-## Troubleshooting and privacy
-
-If the camera fails, check permission, lighting, model-loading internet access, and whether another app is using the camera. Phone camera links need HTTPS. If speech is unavailable, check volume and follow the persistent text prompts. Move only in ways that feel comfortable.
-
-Camera frames are processed on the device. Model files are downloaded externally; voice prompt text is sent through the voice service when available. Browser speech behavior depends on the device. An accepted discovery break retrieves topic evidence through Tavily. The app includes camera cleanup on session exit; actual hardware release still needs playtest verification. Close the tab when finished if needed.
+Camera frames stay on the device. MediaPipe model files load from external hosting. Voice text goes through ElevenLabs when configured and otherwise uses browser speech. Tavily receives only the chosen topic when discovery is accepted.

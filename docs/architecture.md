@@ -1,62 +1,71 @@
 # Architecture
 
-> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
+[Documentation](README.md) · [Developer guide](development.md) · [Shared contracts](../shared/README.md)
 
-[Home](../README.md) · [Developer guide](development.md) · [Shared contracts](../shared/README.md)
+## System boundary
 
-Describes review commit `814f65c`.
+Simon Says is a Vite and React application. Movement inference runs in the browser. The backend contains small proxies for services that require secret keys.
+
+```mermaid
+flowchart LR
+    Camera --> MediaPipe[MediaPipe in browser]
+    MediaPipe --> Engine[Movement game engine]
+    Engine --> UI[React interface]
+    UI --> Voice[/api/elevenlabs]
+    UI --> Discovery[/api/tavily]
+    Voice --> ElevenLabs
+    Discovery --> Tavily
+```
+
+Camera frames never pass through the backend. The voice endpoint receives prompt text. The Tavily endpoint receives a supported topic only after discovery is accepted.
 
 ## Session flow
 
 ```mermaid
 flowchart TD
-    Setup[Choose movements, pace, and discovery] --> Practice[Repeatable unscored practice]
-    Practice --> Ready[Explicit readiness choice]
-    Ready --> First[Movement rounds 1 to 3]
-    First --> Offer{Optional discovery offer}
+    Welcome --> Setup[Choose movements, pace, and discovery]
+    Setup --> Camera[Request camera and load model]
+    Camera --> Rules[Explain three-life rules]
+    Rules --> First[Movement rounds 1–3]
+    First --> Offer{Discovery enabled?}
     Offer -->|Accept| Question[One sourced A/B question]
-    Offer -->|Keep moving or disabled| Last[Movement rounds 4 to 6]
-    Question -->|Complete, skip, or search failure| Last
-    Last --> Results[Separate movement and discovery results]
+    Offer -->|Skip or disabled| Last[Movement rounds 4–6]
+    Question --> Last
+    First -->|Three lives used| Results
+    Last --> Results[Movement and discovery recap]
 ```
 
-## Components
+There is no practice round. A session ends after six rounds, three failed scored rounds, explicit exit, or a ten-second tracking/readiness timeout.
 
-| Path | Responsibility |
+## Main components
+
+| Area | Responsibility |
 | --- | --- |
-| `src/App.jsx` | Setup, session, and results transitions |
-| `ui/GameScreen.jsx` | Practice, movement rounds, recovery controls, discovery handoff |
-| `ui/LearnScreen.jsx` | Sourced question, gesture practices/button fallback, evidence |
-| `engine/gameEngine.js` | Selected-pose rounds, neutral readiness, tracking-aware judging |
-| `engine/learningEngine.js` | Exclusive A/B gesture selection |
-| `vision/checkPose.js` | Camera, pose inference, tracking validity, reset and teardown |
-| `shared/poses.js` | Shared constants and legacy JSDoc contracts |
-| `voice/elevenlabs.js` | Prepared speech cache, playback, fallback, cancellation |
-| `content/learningQuestions.js` | Four reviewed templates and source-evidence matching |
-| `content/tavilyRounds.js` | Topic-based learning request client |
-| `api/` and `server/` | Route wrappers and service proxies |
-| `tests/` and `ui/VerificationLab.jsx` | Synthetic tests and development-only UI harness |
+| `src/App.jsx` | Welcome, setup, game, and results routing |
+| `ui/` | Product screens, brand components, controls, and responsive styling |
+| `engine/gameEngine.js` | Commands, Simon Says/trick judging, timing, tracking, and readiness |
+| `engine/sessionScore.js` | Three-life and result summary rules |
+| `vision/checkPose.js` | Camera lifecycle, MediaPipe inference, movement scoring, and hints |
+| `vision/poseTracking.js` | Fresh-frame confirmation and required-landmark rules |
+| `voice/elevenlabs.js` | Speech preparation, deadlines, playback, fallback, and cancellation |
+| `content/` | Supported discovery templates, source matching, and client request |
+| `server/` and `api/` | Local and Vercel service handlers |
+| `tests/` and `ui/VerificationLab.jsx` | Synthetic regression and flow verification |
 
 ## Movement judging
 
-The player selects from six active poses. Movement windows are 5, 8, or 12 seconds; tricks use three. After speech finishes, judging requires valid tracking and 400 ms of neutral confidence below 0.25 before Go. Active polling uses 100 ms waits. A real command passes on `matched`; a trick fails at confidence 0.45 or higher.
+The setup exposes six poses: left/right hand up, touch head, arms out, touch shoulders, and touch nose. MediaPipe supplies 33 body landmarks. Distances are normalized to shoulder width and corrected for video aspect ratio.
 
-Pause and invalid tracking freeze active time and require neutral readiness again. Fifteen seconds of uninterrupted tracking loss returns an unscored result. Cancellation is also unscored. The session has no lives or elimination, and skips/tracking timeouts are excluded from its denominator. Response metrics exclude interrupted rounds.
+The detector returns `{ matched, confidence, tracking, ready }`. `tracking` distinguishes a visible non-match from missing body points. `ready` confirms the commanded limb has released the target posture. Finger, thumb, and wrist points support touch movements; shoulder touches accept crossed or uncrossed hands; arms-out checks outward direction.
 
-## Services and data
+After approximately 400 ms of readiness, the instruction is spoken and shown. Fresh frames must hold a match briefly to reduce jitter. The active timer pauses during manual pause or lost tracking. Ten seconds without reliable tracking or readiness ends the session and releases the camera.
 
-| Endpoint or path | Input | Output or behavior |
-| --- | --- | --- |
-| `/api/elevenlabs` | POST `{ text }` | MPEG speech audio; keys server-side |
-| `/api/tavily` | POST `{ topic: "space" }` or `{ topic: "animals" }` | `{ questions, topic }` with supported question data |
-| MediaPipe browser runtime | Local camera frames | Pose confidence, match, and tracking validity; model assets downloaded externally |
+## Voice and discovery
 
-Accepting discovery triggers one Tavily search for the chosen topic. A second template is searched only if the first provides no supported question; both attempts share a 12-second deadline. HTTPS domain checks and template-specific evidence matching filter results; one question is shown in the session. There is no offline fallback. The client bounds its wait to 16 seconds and can cancel on exit; failed searches allow movement to continue.
+Speech requests are cached, time-bounded, and fall back to browser speech. The visible instruction is authoritative when voice is unavailable.
 
-Speech preparation shares in-flight requests in a bounded cache with a five-second request timeout. Failed requests can retry. Failed audio playback can fall back to browser speech. Playback cancellation and object URL cleanup are implemented.
+Discovery uses a reviewed question bank. Tavily retrieves evidence from allowed sources; unsupported results are withheld. The server allows a second template only when the first lacks support, with one shared deadline. Discovery failure returns to the movement session and never changes its score.
 
-## Contracts and verification
+## Current limits
 
-The real detector returns `{ matched, confidence, tracking }`. The movement engine requires `tracking === true`; a legacy fake detector without this field is not a drop-in replacement. `resetPoseHistory` and `stopVision` support session boundaries. The shared JSDoc still describes older behavior; [shared contracts](../shared/README.md) records this discrepancy without changing code.
-
-See the [evidence ledger](EVIDENCE_CASES.md) for executed synthetic checks and outstanding real-device validation. This documentation does not establish which revision is live in production.
+See [current build](current-build.md) for the exact evidence. Automated geometry tests cover all six poses, but full real-camera accuracy across people, devices, framing, and lighting remains an acceptance requirement.

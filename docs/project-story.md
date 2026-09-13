@@ -1,43 +1,38 @@
-# The story behind Simon Says
+# Why Simon Says exists
 
-> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
+[Documentation](README.md) · [Player guide](player-guide.md) · [Design direction](design-direction.md)
 
-[Home](../README.md) · [Player guide](player-guide.md) · [Technical architecture](architecture.md)
+## The idea
 
-## Inspiration
+Simon Says turns a familiar childhood rule into a short browser-based movement and listening game. A friendly host gives an instruction, and the player moves only when it begins with “Simon says.” The camera becomes the controller.
 
-Simon Says starts with a familiar game: listen carefully, decide whether to act, and move. The project brings that interaction to a browser with a friendly host, aiming to make short movement sessions approachable for older adults without a controller or wearable device.
+The project focuses on older adults because a familiar rule, large controls, adjustable timing, and seated movement can reduce the effort needed to begin. These are design hypotheses to test with players, not evidence of health improvement or universal accessibility.
 
-## What it does
+## The problem we want to solve
 
-Players choose comfortable movements and timing, practice, then complete six Simon Says rounds. Persistent instructions and a visible Go state clarify when to respond. Pause, repeat, skip, and tracking recovery let players continue without being eliminated.
+Starting a movement activity can feel like work before any movement begins. Products may assume confidence with fitness language, complex navigation, wearables, or rigid routines. Simon Says aims to make the first step smaller:
 
-An optional discovery break after three rounds offers one sourced Space or Animals question. Players practice A/B gestures or use buttons, explore the evidence, and resume movement. Discovery results remain separate from the movement score.
+- open one web page;
+- choose movements that feel comfortable;
+- sit or stand;
+- follow a visible and spoken prompt;
+- finish after six short rounds or when three lives are used.
 
-## How it is built
+## Why the classic game remains central
 
-React connects setup, movement, discovery, and results. MediaPipe detects poses in the browser. Separate engines handle movement/trick rules and A/B gesture selection. ElevenLabs speech is prepared ahead with timeout, cancellation, and browser fallback. Tavily searches support a reviewed bank of four questions using allowed domains and matching excerpts. Unsupported questions are withheld; this is not unconstrained AI question generation.
+The three-life rule gives the session a recognizable goal and a little tension. The redesign keeps the original story—Simon wants to “stay sharp together”—while adding clearer setup, visible rules, recovery controls, and camera privacy language.
 
-## Engineering highlights
+The optional discovery break extends attentive listening into curiosity. After round three, the player may request one sourced Space or Animals question through Tavily or keep moving. Discovery is deliberately separate from movement scoring.
 
-- Explicit tracking validity prevents missing camera landmarks from being counted as correct stillness.
-- Neutral readiness separates an instruction from the scoring window and prevents carryover poses from scoring immediately.
-- Pause and tracking recovery preserve active response time; skips and tracking timeouts remain unscored.
-- Speech preparation deduplicates requests and cleans up playback resources.
-- Optional discovery preserves the movement session across answering, skipping, or search failure.
+## Product principles
 
-## Current evidence and next steps
+1. **Ask before using the camera.** Welcome and setup work without camera access.
+2. **Let the player choose.** Movement selection, pace, pause, repeat, skip, and discovery are controllable.
+3. **Make state visible.** The instruction, timer, lives, camera status, and feedback remain readable.
+4. **Process movement locally.** MediaPipe evaluates camera frames in the browser.
+5. **Fail clearly.** Tracking and service failures provide a route back to setup or movement.
+6. **Claim only what is known.** Automated tests do not substitute for real player and device testing.
 
-This documentation targets review commit `814f65c`, not the older `main` build. The review branch records 31 passing synthetic tests and a passing production build. The existing [evidence ledger](EVIDENCE_CASES.md) records additional simulated browser checks and their limitations.
+## What success would mean
 
-Real camera accuracy and release/restart, live authenticated Tavily and ElevenLabs calls, and usefulness for older adults remain to be observed. The next step is the [first playtest](FIRST_PLAYTEST.md), followed by changes justified by actual observations. No clinical benefit, adoption, or measured latency improvement is claimed.
-
-## Presentation checklist
-
-Before using this story for a hackathon presentation:
-
-- [ ] Add a working HTTPS demo link and a short demo video.
-- [ ] Show the start screen, one real command, one trick, and the results screen.
-- [ ] Record which devices and browsers were tested, with outcomes.
-- [ ] Add the team's own account of challenges, lessons, and contributions.
-- [ ] Confirm event-specific fields and requirements against the actual event.
+Near-term success is a real player completing the game without coaching, understanding when to move, recovering from a missed instruction, and feeling comfortable enough to play again. Longer-term questions—repeat use, accessibility across devices and bodies, and usefulness for older adults—require observation and cannot be inferred from the current prototype.

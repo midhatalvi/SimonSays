@@ -1,46 +1,50 @@
-# First observed playtest
+# Live playtest
 
-> Version scope: this guide describes review branch `improve/review-ready-interactions` at `814f65c`. The application on `main` is still the earlier build; use the review branch to follow this guide.
+[Documentation](README.md) · [Player guide](player-guide.md) · [Validation evidence](EVIDENCE_CASES.md)
 
-[Home](../README.md) · [Developer guide](development.md) · [Project story](project-story.md)
-Status: READY TO RUN — no participant results collected.
+Use this checklist for a real person and camera. The goal is to find where the current experience fails, not to coach the player into a pass.
 
-## This laptop
+## Prepare
 
-Run the development server and open the localhost URL it prints (normally http://localhost:5174/). Choose only comfortable movements. Start with Relaxed (12 seconds). The player should press Play with Simon and respond to the browser's camera prompt themselves. No microphone access is needed.
+- Use the current review build and record its commit.
+- Start on a laptop at localhost or a phone over HTTPS.
+- Use even front lighting and keep head, shoulders, and hands visible.
+- Begin with **Comfortable — 8 seconds** and discovery enabled.
+- Let the player grant camera permission and choose comfortable movements.
 
-This local Vite preview uses browser speech fallback because it does not serve the ElevenLabs API. It does not validate live ElevenLabs latency. To validate ElevenLabs, use an HTTPS deployment of this branch with the server-side key configured; the existing public demo has not been updated.
+## Acceptance sequence
 
-For a phone, use an HTTPS preview of the updated branch. A phone cannot use this laptop's localhost address. A narrow desktop viewport test is not a real-phone test.
+1. Confirm the player understands “move only when Simon says.”
+2. Complete one correct Simon Says round for every selected movement.
+3. Stay still through a trick round.
+4. Intentionally move on one trick and confirm exactly one life is lost.
+5. Pause, repeat the instruction, resume, and confirm the active time was preserved.
+6. Skip one round and confirm no life is lost and the round is unscored.
+7. Accept discovery, answer or skip, view the source, and return to movement.
+8. Finish or use all three lives; confirm movement and discovery results remain separate.
+9. Play again and confirm the camera reconnects.
+10. End the session and confirm the browser camera indicator turns off.
 
-## Five-minute sequence
+Repeat the movement cases for left/right hand up, head, nose, shoulders, and arms out. Include crossed and uncrossed shoulder touches if comfortable.
 
-1. Without coaching, ask the player to choose comfortable movements and a pace. Record where they hesitate.
-2. Complete practice. Ask: “When do you think the game starts judging your move?” Correct understanding is after returning to neutral and seeing Go.
-3. During a scored round, let a required hand briefly leave the camera view. Check that the timer pauses, no penalty is issued, and returning to neutral allows resuming. If the detector does not actually lose tracking, record that instead of assuming this case was tested.
-4. Pause, repeat the instruction, then resume. Check that the instruction stays visible and repeat does not resume automatically.
-5. Skip a round. Check that it is excluded from the scored-round total.
-6. Finish. Confirm the camera indicator turns off. Ask whether the player wants another session and why.
+## Record
 
-Stop any movement that feels uncomfortable. Do not instruct a participant to use a movement they excluded.
+```text
+Commit:
+Date:
+Device and browser:
+Camera position and lighting:
+Selected movements and pace:
+Completed without coaching:
+Correct moves missed by the app:
+Wrong moves accepted by the app:
+Tracking hints shown:
+Pause / repeat / skip result:
+Discovery result and source:
+Camera released after exit:
+Voice source (ElevenLabs / browser / none):
+Player’s words about clarity and comfort:
+Change justified by this session:
+```
 
-## Record only actual observations
-
-Participant alias: ___  Date: ___  Device/browser: ___
-Context (desk break / shared family play / another context): ___
-Selected movements and pace: ___
-Started without help? ___
-Understood neutral and Go? ___
-False judgments (what happened vs. what the game reported): ___
-Tracking-loss recovery observed? ___
-Pause/repeat/skip clear? ___
-Camera stopped at the end? ___
-Voice source (browser / ElevenLabs / unknown): ___
-Noticeable silent gaps and when: ___
-Comfort and tone, participant's exact words if offered: ___
-Finished? ___ Voluntary replay? ___ Optional return on another day? ___
-Next change justified by this observation: ___
-
-A passed session does not establish population-wide accessibility or health benefits. Use several adults across different needs to guide the next revision, not to manufacture an adoption statistic.
-
-Before scored play, ask participants to try Practice again and then choose I’m ready. Confirm they can end a session to change movements. Record whether they understood the readiness choice without prompting.
+Stop any movement that feels uncomfortable. One successful session is evidence for that device and context only; it does not establish broad accessibility or benefit.

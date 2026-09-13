@@ -1,23 +1,36 @@
-# Current local build
+# Current build
 
-Based on main `44827c0`, including merged PR #1. This follow-up review combines the redesign with the movement and flow corrections below.
+[Documentation](README.md) · [Architecture](architecture.md) · [Validation evidence](EVIDENCE_CASES.md)
 
-The user requested the original three-life rules, up to six rounds, no practice, and a default-enabled optional Tavily discovery break after round three. Skips and unavailable tracking do not cost lives. Three failed rounds end the game. Discovery answers never change movement scoring.
+The current review is [PR #2](https://github.com/midhatalvi/SimonSays/pull/2) on `design/a-little-lift`, based on the main branch that includes merged PR #1.
 
-Readiness precedes instruction delivery and uses visible hands below shoulder height. Older detector mocks still use confidence-based readiness. Ten seconds without reliable readiness ends the session and releases the camera, including when intermittent visible frames alternate with tracking loss. A valid but ambiguous posture cannot wait indefinitely. Pausing intentionally suspends judging. The response clock starts after bounded instruction speech, so service latency does not consume the player's selected time.
+## Implemented
 
-Speech requests have an 1800 ms timeout before browser fallback. Each spoken line has an overall eight-second deadline, including fetching and playback. Persistent text remains available. This deadline can truncate a long line; speech is supplementary to the visible instructions.
+- Original three-life Simon Says rules across up to six rounds.
+- No practice round; the game explains rules after camera startup.
+- Comfortable movement selection and 5, 8, or 12-second timing.
+- Pause, repeat, skip without penalty, exit, and replay.
+- Default-enabled optional Tavily discovery after round three.
+- Separate movement and discovery scoring.
+- Bespoke responsive identity and locally hosted licensed fonts.
+- On-device MediaPipe detection with finger-aware touches and movement-specific readiness.
+- Local and Vercel API handlers for Tavily and ElevenLabs.
+- Bounded readiness, tracking, search, speech fetch, and speech playback waits.
 
-Local Vite now serves the existing API handlers; `.env.local` keys remain server-side and are excluded from version control. The authenticated local Tavily endpoint returned a NASA-supported question. ElevenLabs still uses browser fallback locally; its authenticated service remains unverified.
+## Verified
 
-Regression coverage includes ambiguous readiness, intermittent tracking, speech that never finishes, lives, skipped rounds, and source validation. Automated and simulated checks do not establish webcam accuracy, phone performance, or successful authenticated API access.
+- 52 automated tests pass.
+- The production build passes.
+- The complete synthetic browser flow reaches discovery, resumes movement, and reaches results.
+- Authenticated Tavily returned a NASA-supported question locally.
+- The supplied Tavily key remains in an ignored local environment file and is not committed.
 
-Observed this session: the simulated browser flow reached discovery, accepted A, resumed movement, and ended with zero lives and a separate discovery score. Real webcam sessions connected but ended during readiness or failed to recognize a nose touch; these prompted the recognition corrections below. A successful real playthrough remains unverified.
+## Known limitations
 
-See this document for local behavior; upstream architecture/player guides describe the older review revision.
+- A complete successful real-camera playthrough after the latest pose corrections has not been observed.
+- The last focused camera attempt reported both hands untracked before a command.
+- Real camera accuracy varies with person, framing, lighting, device, and MediaPipe confidence.
+- Authenticated ElevenLabs and a physical phone session remain unverified.
+- An eight-second speech deadline may truncate an unusually long line; written instructions remain visible.
 
-## Movement recognition correction
-
-Touch detection now considers visible index/thumb landmarks and wrists. Head touch targets above the ears (or above the nose when ears are unavailable). Shoulder touch accepts distinct crossed or uncrossed hand pairs. Arms-out checks outward direction rather than absolute distance. Readiness checks the commanded limb and requires release of the target pose. Physical geometry is tested at different aspect ratios with missing points and wrong-pose cases.
-
-52 automated tests pass. These include all six selectable movements, but remain synthetic geometry and lifecycle tests. The focused real retest reported both hands out of tracking before reaching a command; it does not establish successful live nose-touch recognition. Tavily has separately returned a live NASA-supported question with the locally configured server key. API shape and original three-life movement rules are preserved.
+This is the most capable current implementation, but passing synthetic checks does not make it production-ready. Follow the [live playtest](FIRST_PLAYTEST.md) before a demo or merge decision.
