@@ -4,6 +4,7 @@ import { checkPose, getVisionStatus, resetPoseHistory, stopVision } from '../vis
 import { say, prepareSpeech, cancelSpeech } from '../voice/elevenlabs.js';
 import SimonCharacter from './SimonCharacter.jsx';
 
+const liveRuntime = { checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const labels = {
   neutral: 'Relax your hands below your shoulders. Keep them in view.',
@@ -12,7 +13,8 @@ const labels = {
   paused: 'Paused. Take your time.',
 };
 
-export default function GameScreen({ onDone, settings }) {
+export default function GameScreen({ onDone, settings, runtime = liveRuntime }) {
+  const { checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech } = runtime;
   const [prompt, setPrompt] = useState('Getting the camera ready…');
   const [status, setStatus] = useState('Loading the movement detector…');
   const [roundNumber, setRoundNumber] = useState(0);
@@ -91,7 +93,7 @@ export default function GameScreen({ onDone, settings }) {
       clearTimeout(timer); controller.abort(); activeController.current?.abort(); cancelSpeech();
       if (running) stopVision();
     };
-  }, [settings]);
+  }, [settings, runtime]);
 
   async function repeat() {
     pausedRef.current = true; setPaused(true); setRepeatBusy(true);
@@ -102,6 +104,7 @@ export default function GameScreen({ onDone, settings }) {
     <p>Check camera permission and your connection, then reload. You have not lost any points.</p>
     <button className="big-btn" onClick={() => window.location.reload()}>Try again</button></div>;
   return <div className="screen fair-game">
+    <div id="camera-preview-slot" aria-label="Camera preview" />
     <p>{roundNumber === 0 ? 'Practice' : `Round ${roundNumber} of 6`}</p>
     <SimonCharacter expression="happy" />
     <h1 className="instruction">{prompt}</h1>

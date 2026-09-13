@@ -49,3 +49,20 @@ test('abort ends round without score', async () => {
   const result = await run(() => neutral, { options: { signal: controller.signal } });
   assert.equal(result.passed, null); assert.equal(result.reason, 'cancelled');
 });
+test('mid-round tracking loss does not consume the remaining trick window', async () => {
+  let finishAt = 0;
+  const result = await run(t => {
+    finishAt = t;
+    return t >= 800 && t < 1800 ? { tracking: false } : neutral;
+  });
+  assert.equal(result.passed, true);
+  assert.ok(finishAt >= 2900, `window ended prematurely at ${finishAt}`);
+});
+test('a held pose never scores without a neutral transition', async () => {
+  const controller = new AbortController();
+  const result = await run(t => {
+    if (t >= 2000) controller.abort();
+    return { tracking: true, matched: true, confidence: 1 };
+  }, { round: { simonSays: true }, options: { signal: controller.signal } });
+  assert.equal(result.passed, null); assert.equal(result.reason, 'cancelled');
+});

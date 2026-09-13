@@ -25,3 +25,7 @@ Tavily code remains present but is not connected to the active game. No latency,
 ## Review
 
 Changes are on local branch `improve/fair-play-audio`. Public deployment is unchanged. Existing dependency audit findings require separate review before production use.
+
+## Observed-session handoff
+
+Use [the first playtest guide](docs/FIRST_PLAYTEST.md) for an actual participant. For reproducible browser UI examples only, run the dev server and add `?lab` to its URL. The lab is clearly labeled, uses no camera/cloud speech, and is not included in production builds.

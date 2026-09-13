@@ -73,7 +73,13 @@ function mountPreview() {
   canvas.width = 640; canvas.height = 480;
   Object.assign(canvas.style, { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", transform: "scaleX(-1)" });
   wrap.appendChild(video); wrap.appendChild(canvas);
-  document.body.appendChild(wrap);
+  const slot = document.getElementById("camera-preview-slot");
+  if (slot) {
+    window.removeEventListener("resize", updatePreviewLayout);
+    window.removeEventListener("orientationchange", updatePreviewLayout);
+    wrap.style.cssText = "position:relative;width:100%;height:100%;overflow:hidden;border-radius:12px;background:#000";
+    slot.appendChild(wrap);
+  } else document.body.appendChild(wrap);
   state.video = video; state.canvas = canvas; state.ctx = canvas.getContext("2d");
 }
 

@@ -365,3 +365,18 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .instruction { max-width: 760px; font-size: clamp(1.6rem, 4vw, 2.8rem); }
 .fair-game > [role="status"] { max-width: 700px; font-size: 1.25rem; min-height: 3em; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+#camera-preview-slot { width: min(100%, 240px); aspect-ratio: 4 / 3; border-radius: 12px; }
+#camera-preview-slot:empty { display: none; }
+.verification-panel { background: #fff; border: 3px solid #176a80; padding: 16px; color: #253c44; }
+.verification-panel h1 { font-size: 1.4rem; }
+.verification-panel select, .verification-panel button { font-size: 1rem; padding: 10px; }
+.fair-game { justify-content: flex-start; gap: 12px; }
+.fair-game > p, .fair-game > h1 { margin: 4px 0; }
+@media (max-width: 600px) {
+  .fair-game { padding: 16px; }
+  .fair-game #camera-preview-slot { width: 160px; }
+  .fair-game .mascot-body, .fair-game .mascot-feet { display: none; }
+  .fair-game .robot-sprout { height: 24px; }
+  .play-controls { position: sticky; bottom: 0; background: #fff8ee; padding: 10px 0; width: 100%; z-index: 2; }
+  .play-controls button { padding: 12px; font-size: 1rem; }
+}

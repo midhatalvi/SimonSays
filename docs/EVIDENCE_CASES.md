@@ -49,3 +49,14 @@ Completed / replayed / returned later: ___
 Observer notes and follow-up change: ___
 
 Repeat this worksheet for an older adult with a family member, a player using written instructions, and a player selecting limited movements. Do not invent quotes, test participants, numerical improvements, or proof of demand.
+
+## Follow-up verification
+
+- 17 automated tests now cover mid-round tracking loss, held-pose rejection, prepared audio completion, playback-rejection fallback, pre-cancelled speech and active playback cancellation. Audio/browser interfaces in those tests are mocks.
+- Chrome browser verification used the actual GameScreen and ScoreScreen through `?lab`, with explicitly labeled synthetic detector input and simulated speech. Confirmed tracking-lost message, repeat staying paused, neutral readiness after recovery, visible Go, pause preserving the command/countdown, and skip from pause.
+- Completed an all-skipped browser session: score 0, scored total 0, played rounds 6, unscored 6. The recap correctly said no rounds were scored; the injected detector's stop method was called. This does not establish physical webcam release.
+- Inspected the game at 390×844 viewport. Compact mascot and sticky controls keep the instruction/recovery flow usable at this width. Inspected setup at the same width and selected the 12-second pace. This is responsive emulation, not an actual phone trial.
+- Fixed preview placement: the actual camera now mounts inside its reserved layout slot instead of floating over controls. Its populated layout still needs a real-camera check.
+- Fixed the zero-score spoken recap and added cancellation when leaving the result screen.
+- The synthetic verification module is development-only and excluded from the production JS build.
+- Real-camera recognition, live ElevenLabs playback/latency, physical-device diversity and participant usefulness remain NOT TESTED. See FIRST_PLAYTEST.md.
