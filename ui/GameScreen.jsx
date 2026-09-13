@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { buildRounds, judgeRound, reactionFor } from '../engine/gameEngine.js';
 import { checkPose, getVisionStatus, resetPoseHistory, stopVision } from '../vision/checkPose.js';
 import { say, prepareSpeech, cancelSpeech } from '../voice/elevenlabs.js';
+import LearnScreen from './LearnScreen.jsx';
+import { getLearningQuestions } from '../content/tavilyRounds.js';
 import SimonCharacter from './SimonCharacter.jsx';
 
-const liveRuntime = { checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
+const liveRuntime = { getLearningQuestions, checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const labels = {
   neutral: 'Relax your hands below your shoulders. Keep them in view.',
@@ -15,6 +17,8 @@ const labels = {
 
 export default function GameScreen({ onDone, settings, onExit, runtime = liveRuntime }) {
   const { checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech } = runtime;
+  const [discovery, setDiscovery] = useState(null);
+  const discoveryChoice = useRef(null), discoveryResult = useRef(null);
   const [prompt, setPrompt] = useState('Getting the camera ready…');
   const [status, setStatus] = useState('Loading the movement detector…');
   const [roundNumber, setRoundNumber] = useState(0);
@@ -92,13 +96,27 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
           setPracticeReview(false);
           if (practiceChoice.current === 'retry') index--;
         }
+        if (index === 3 && settings.discovery && !signal.aborted) {
+          stopVision();
+          discoveryChoice.current = null;
+          setDiscovery('offer');
+          while (!discoveryChoice.current && !signal.aborted) await wait(100);
+          if (signal.aborted) break;
+          setDiscovery(null);
+          // Let the discovery screen release its detector before movement resumes.
+          await wait(100);
+          if (signal.aborted) break;
+          pausedRef.current = false; setPaused(false);
+          setStatus('Back to movement. Listen for Simon says.');
+          await say('Back to movement. Follow the instruction only if Simon says.', { signal });
+        }
       }
       if (!signal.aborted) {
         stopVision();
         const scored = results.filter(r => r.passed != null);
         doneRef.current({ score: scored.filter(r => r.passed).length, total: scored.length,
           roundsPlayed: results.length, eliminated: false, reactions: [],
-          unscored: results.length - scored.length });
+          discovery: discoveryResult.current, unscored: results.length - scored.length });
       }
     }, 0);
     return () => {
@@ -112,6 +130,20 @@ export default function GameScreen({ onDone, settings, onExit, runtime = liveRun
     await say(command.current, { signal: session.current?.signal });
     if (!session.current?.signal.aborted) setRepeatBusy(false);
   }
+  function finishDiscovery(summary = null) {
+    discoveryResult.current = summary;
+    setDiscovery(null); discoveryChoice.current = 'continue';
+  }
+  if (discovery === 'offer') return <main className="screen setup-screen">
+    <h1>Ready for a discovery break?</h1>
+    <p>You’ve finished three movement rounds. Explore one {settings.topic} question, or keep moving.</p>
+    <p>Question answers are separate from your movement score.</p>
+    <button className="big-btn" onClick={() => setDiscovery('question')}>Explore one fact</button>
+    <button onClick={() => finishDiscovery()}>Keep moving</button>
+    {onExit && <button onClick={onExit}>End session</button>}
+  </main>;
+  if (discovery === 'question') return <LearnScreen settings={settings} runtime={runtime}
+    onExit={() => finishDiscovery()} onFinish={finishDiscovery} />;
   if (error) return <div className="screen"><h1>Camera setup needs another try</h1>
     <p>Check camera permission and your connection, then reload. You have not lost any points.</p>
     <button className="big-btn" onClick={() => window.location.reload()}>Try again</button>

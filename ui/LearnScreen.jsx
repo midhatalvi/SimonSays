@@ -6,19 +6,21 @@ import { say, prepareSpeech, cancelSpeech } from '../voice/elevenlabs.js';
 const names = { RIGHT_HAND_UP: 'Raise right hand', LEFT_HAND_UP: 'Raise left hand', TOUCH_HEAD: 'Touch head',
   TOUCH_NOSE: 'Touch nose', TOUCH_SHOULDERS: 'Touch shoulders', ARMS_OUT: 'Arms out wide' };
 const live = { getLearningQuestions, checkPose, getVisionStatus, resetPoseHistory, stopVision, say, prepareSpeech, cancelSpeech };
-export default function LearnScreen({ settings, onExit, runtime = live }) {
+export default function LearnScreen({ settings, onExit, onFinish, runtime = live }) {
   const [questions, setQuestions] = useState(null), [error, setError] = useState('');
-  const [step, setStep] = useState(0), [result, setResult] = useState(undefined);
+  const [step, setStep] = useState(settings.answerMode === 'buttons' ? 2 : 0), [result, setResult] = useState(undefined);
   const [status, setStatus] = useState('Finding supporting sources…'), [ready, setReady] = useState(false);
   const [paused, setPaused] = useState(false), [repeatBusy, setRepeatBusy] = useState(false);
   const pause = useRef(false), turn = useRef(null), line = useRef(''), totals = useRef({ correct: 0, answered: 0 });
-  const poses = settings.poses.slice(0, 2), buttons = settings.answerMode === 'buttons';
+  const poses = settings.poses.slice(0, 2);
+  const [buttons, setButtons] = useState(settings.answerMode === 'buttons');
   useEffect(() => {
     const controller = new AbortController();
-    runtime.getLearningQuestions(settings.topic, controller.signal).then(setQuestions).catch(e => {
+    const timeout = setTimeout(() => { controller.abort(); setError('Discovery search took too long. You can continue moving.'); }, 16000);
+    runtime.getLearningQuestions(settings.topic, controller.signal).then(q => { if (!controller.signal.aborted) setQuestions(onFinish ? q.slice(0, 1) : q); }).catch(e => {
       if (!controller.signal.aborted) setError(e.message);
-    });
-    return () => { controller.abort(); turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); };
+    }).finally(() => clearTimeout(timeout));
+    return () => { clearTimeout(timeout); controller.abort(); turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); };
   }, [settings, runtime]);
   const practice = step < 2;
   const card = questions && (practice ? { question: `Practice: choose ${step === 0 ? 'A' : 'B'}. This is not scored.`,
@@ -35,9 +37,9 @@ export default function LearnScreen({ settings, onExit, runtime = live }) {
       if (signal.aborted || didAnswer) return;
       didAnswer = true; setReady(false); setResult(answer);
       if (!practice && answer != null) { totals.current.answered++; if (answer === card.correct) totals.current.correct++; }
-      const text = answer == null ? 'No score. You can try the next question.' : practice
+      const text = answer == null ? 'Skipped without penalty. Continue when you are ready.' : practice
         ? answer === card.correct ? 'You chose the requested answer. Ready for the next step?' : 'That was the other answer. You can practice again.'
-        : answer === card.correct ? `Correct. ${card.answers[card.correct]}. See the source below.` : `The supported answer is ${card.answers[card.correct]}. See the source below.`;
+        : answer === card.correct ? `Correct. ${card.answers[card.correct]}. ${card.source.excerpt}` : `The supported answer is ${card.answers[card.correct]}. ${card.source.excerpt}`;
       setStatus(text); void runtime.say(text, { signal });
     };
     controller.accept = accept;
@@ -47,11 +49,11 @@ export default function LearnScreen({ settings, onExit, runtime = live }) {
         const deadline = Date.now() + 25000;
         while (!signal.aborted && runtime.getVisionStatus().status === 'loading' && Date.now() < deadline) await new Promise(r => setTimeout(r, 100));
         if (signal.aborted) return;
-        if (runtime.getVisionStatus().status !== 'ready') { setError('Camera setup failed. Return to setup to use answer buttons or check camera permission.'); return; }
+        if (runtime.getVisionStatus().status !== 'ready') { setError('Camera setup failed. Use answer buttons instead, or return to movement.'); return; }
       }
-      line.current = `${card.question} A: ${card.answers[0]}. B: ${card.answers[1]}.`;
+      line.current = `Question round. Choose A or B. No Simon says tricks here. ${card.question} A: ${card.answers[0]}. B: ${card.answers[1]}.`;
       const next = questions[Math.max(0, step - 1)];
-      if (next) void runtime.prepareSpeech(`${next.question} A: ${next.answers[0]}. B: ${next.answers[1]}.`);
+      if (next) void runtime.prepareSpeech(`Question round. Choose A or B. No Simon says tricks here. ${next.question} A: ${next.answers[0]}. B: ${next.answers[1]}.`);
       setStatus('Listen or read the question.'); await runtime.say(line.current, { signal });
       if (signal.aborted) return;
       setReady(true);
@@ -60,7 +62,7 @@ export default function LearnScreen({ settings, onExit, runtime = live }) {
         onState: setStatus, reset: runtime.resetPoseHistory }));
     })().catch(() => { if (!signal.aborted) setError('This round could not start. Return to setup and try again.'); });
     return () => { controller.abort(); runtime.cancelSpeech(); };
-  }, [questions, step, runtime]);
+  }, [questions, step, runtime, buttons]);
   function skip() {
     turn.current?.accept?.(null); turn.current?.abort(); runtime.cancelSpeech();
   }
@@ -70,8 +72,10 @@ export default function LearnScreen({ settings, onExit, runtime = live }) {
     if (!turn.current?.signal.aborted) setRepeatBusy(false);
   }
   return <main className="screen setup-screen learn-screen">
-    <h1>Learn &amp; Move</h1>
-    <button onClick={onExit}>Back to setup</button>
+    <h1>Discovery break</h1>
+    <p>This is a question round—choose A or B. No Simon says tricks here. Take your time.</p>
+    <button onClick={() => onFinish && totals.current.answered ? onFinish({ ...totals.current }) : onExit()}>{onFinish ? 'Return to movement' : 'Back to setup'}</button>
+    {!buttons && questions && result === undefined && <button onClick={() => { turn.current?.abort(); runtime.cancelSpeech(); runtime.stopVision(); setError(''); setButtons(true); setStep(s => Math.max(2, s)); }}>Use answer buttons instead</button>}
     {error ? <p role="alert">{error}</p> : finished ? <>
       <h2>Learning session complete</h2><p>{totals.current.correct} correct from {totals.current.answered} answered questions. Practice and skips were not scored.</p>
       <p>This score is not a measure of health or ability.</p><ul>{questions.map(q => <li key={q.id}><a href={q.source.url} target="_blank" rel="noopener noreferrer">{q.source.title}</a></li>)}</ul>
@@ -91,13 +95,13 @@ export default function LearnScreen({ settings, onExit, runtime = live }) {
         <button disabled={!ready || repeatBusy} onClick={skip}>Skip — no penalty</button>
       </div> : <>
         {!practice && <section aria-label="Answer evidence"><p>Answer: {card.answers[card.correct]}</p>
-          <blockquote>{card.source.excerpt}</blockquote>
+          <details><summary>Explore this fact</summary><blockquote>{card.source.excerpt}</blockquote>
           <a href={card.source.url} target="_blank" rel="noopener noreferrer">Read source: {card.source.title}</a>
-          <p>{card.source.synthetic ? 'Synthetic example — no live retrieval' : `Retrieved through Tavily · ${new Date(card.source.retrievedAt).toLocaleDateString()}`}</p>
+          <p>{card.source.synthetic ? 'Synthetic example — no live retrieval' : `Retrieved through Tavily · ${new Date(card.source.retrievedAt).toLocaleDateString()}`}</p></details>
         </section>}
         <div className="play-controls">
           {practice && <button onClick={() => { setQuestions([...questions]); }}>Practice again</button>}
-          <button onClick={() => { setRepeatBusy(false); setStep(s => s + 1); }}>{step === 1 ? 'Start learning' : 'Continue'}</button>
+          <button onClick={() => { if (onFinish && !practice) onFinish({ ...totals.current }); else { setRepeatBusy(false); setStep(s => s + 1); } }}>{onFinish && !practice ? 'Back to movement' : step === 1 ? 'Start question' : 'Continue'}</button>
         </div>
       </>}
     </>}

@@ -38,3 +38,7 @@ Invite participants across these needs without claiming their experiences are in
 ## Deferred
 
 Automatic acceleration, near-miss scoring, clinical metrics, new full-body movements, Slack/Teams integration, live-news commands, and market-size claims. A skeleton overlay is optional explanatory UI, not proof of recognition accuracy.
+
+## Integrated discovery revision — 2026-09-13
+
+One “Play with Simon” entry keeps older adults and comfortable movement central. An optional offer after three of six movement rounds leads to one sourced question, with explicit question rules, gesture practice or buttons, expandable evidence, and return to the preserved movement session. Discovery feedback never alters movement scoring. Search failures are recoverable without ending the session. This supersedes the separate public Learn & Move entry; the isolated screen remains available in the development verification harness. No clinical benefit or user-study outcome is claimed.

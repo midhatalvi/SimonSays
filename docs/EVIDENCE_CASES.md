@@ -79,3 +79,13 @@ Added automated cases for source/domain requirements, unsafe citation URLs, answ
 Chrome synthetic learning example completed practice A and B, answered the question incorrectly, showed the correct answer and citation excerpt/link, then showed 0 correct from 1 answered. Both practice answers were excluded. This uses fixtures, not live search or real camera input.
 
 Live Tavily retrieval depends on the deployment key. Evidence matching uses reviewed topic templates; it is not semantic fact-checking or arbitrary question generation. Four question templates (two per topic) are the current coverage. Participant validation and real-device gesture accuracy remain pending.
+
+## Integrated discovery browser examples — 2026-09-13
+
+These are executed synthetic UI cases, not participant evidence or live sponsor checks. Run `npm run dev`, open `/?lab`, select Movement and run the example. The detector and speech are simulated; no camera, microphone, or live search is requested.
+
+- Completed practice, continued through three movement rounds, accepted “Explore one fact”, chose A for the synthetic Jupiter question, expanded “Explore this fact”, and returned to movement. Final displayed result: movement 2/6, discovery 1 correct from 1 answered, six movement rounds played. Discovery did not increase the movement score or round count.
+- Reset the example, enabled “Simulate search failure”, completed practice and three movement rounds, accepted the break, observed the unavailable-search message, and used “Return to movement”. The session resumed rather than returning to setup.
+- Existing 25 automated cases pass, including tracking fairness, source validation, ambiguous gestures, and speech cancellation. Production build passes.
+
+Pending real-use validation: camera release/restart on actual hardware; two comfortable gesture mappings with older adults; comprehension of the switch from Simon says rules to A/B questions; pause/repeat discoverability; authenticated live Tavily/ElevenLabs verification. The 16-second client timeout is implemented but was not timed in the browser check. No cognitive benefit, retention, or accessibility-compliance result is established.

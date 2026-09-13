@@ -11,6 +11,7 @@ function warmNote(score, total) {
 }
 
 export default function ScoreScreen({
+  discovery = null,
   unscored = 0,
   score,
   total,
@@ -42,6 +43,8 @@ export default function ScoreScreen({
         <div className="big-num">
           {total ? `${score}/${total}` : "Session complete"}
         </div>
+        <p>Movement rounds</p>
+        {discovery && <p>Discovery: {discovery.correct} correct from {discovery.answered} answered questions. This does not change your movement score.</p>}
         <p>{unscored} rounds skipped or not scored. Camera interruptions never count against you.</p>
         {avgSec != null && (
           <div className="metrics">
